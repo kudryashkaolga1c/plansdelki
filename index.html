@@ -344,8 +344,10 @@ async function api(action, data){
   if (!API || /ВСТАВЬ/.test(API)) throw new Error('Не указан адрес сервера в config.js');
   let res;
   try {
-    res = await fetch(API, {method:'POST', body: JSON.stringify(Object.assign({action, token: session && session.token}, data||{})), redirect:'follow'});
-  } catch(e){ setOnline(false); throw new Error('Нет связи с сервером'); }
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 30000);
+    res = await fetch(API, {method:'POST', body: JSON.stringify(Object.assign({action, token: session && session.token}, data||{})), redirect:'follow', signal: ctl.signal});
+    clearTimeout(tm);
+  } catch(e){ setOnline(false); throw new Error(e && e.name === 'AbortError' ? 'Сервер долго не отвечает — попробуй ещё раз' : 'Нет связи с сервером'); }
   let j; try { j = await res.json(); } catch(e){ setOnline(false); throw new Error('Сервер ответил странно — проверь адрес в config.js'); }
   setOnline(true);
   if (!j.ok){ if (j.error === 'AUTH'){ logout(true); throw new Error('Нужно войти заново'); } throw new Error(j.error || 'Ошибка сервера'); }
