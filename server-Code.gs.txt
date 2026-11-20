@@ -19,6 +19,9 @@ const SHEETS = {
   settings: { name: 'Настройки', head: ['Ключ','Значение'] }
 };
 const TOKEN_DAYS = 180;
+// ID таблицы-базы. Если скрипт открыт из самой таблицы (Расширения → Apps Script), можно оставить пустым.
+const SHEET_ID = '1BC4C_eO2AMYPFvI7tseB-i55sc9M0WZVwa3dN8PDz0I';
+function book_() { return SHEET_ID ? SpreadsheetApp.openById(SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet(); }
 
 /* ---------------- entry points ---------------- */
 function doGet(e) {
@@ -73,7 +76,7 @@ function route_(r) {
 /* ---------------- sheets ---------------- */
 function sheet_(key) {
   const def = SHEETS[key];
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = book_();
   let sh = ss.getSheetByName(def.name);
   if (!sh) {
     sh = ss.insertSheet(def.name);
