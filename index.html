@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>План сделки — Пора действовать</title>
+<meta name="theme-color" content="#F3AD32">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="План сделки">
+<script src="config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --green:#141414; --green-2:#3A3A3A; --green-soft:#F1EEE8;
+  --orange:#DD1C1C; --orange-soft:#FDEBC8; --yellow:#F3AD32;
+  --paper:#F7F4EE; --card:#FFFFFF; --ink:#1B2422; --muted:#6B7774; --line:#E3DED4;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:Manrope,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{max-width:880px;margin:0 auto;padding:0 14px 120px}
+
+/* header */
+.top{display:flex;align-items:center;gap:12px;padding:16px 0 10px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:40px;height:40px;flex:none}
+.brand img.logo{height:44px;width:auto;display:block}
+.doc .dh .brand img.logo{height:58px}
+.brand .wm small{display:block;border-left:1px solid var(--line);padding-left:10px;margin-left:2px}
+.wm{line-height:1.05}
+.wm b{display:block;font-weight:800;letter-spacing:.06em;font-size:14px;color:var(--green)}
+.wm b span{color:var(--orange)}
+.wm small{font-size:11px;color:var(--muted);letter-spacing:.02em}
+.tabs{display:flex;gap:4px;background:#ECE7DD;border-radius:12px;padding:4px;margin:6px 0 14px;position:sticky;top:0;z-index:20}
+.tabs button{flex:1;border:0;background:transparent;padding:9px 6px;border-radius:9px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
+.tabs button.on{background:#fff;color:var(--green);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.card h2{font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:8px;color:var(--green)}
+.card h2 .n{width:24px;height:24px;border-radius:50%;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font-size:12px;font-weight:800;flex:none}
+.card h2 .sp{flex:1}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.grid .full{grid-column:1/-1}
+@media (max-width:620px){.grid{grid-template-columns:1fr}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:600}
+[hidden]{display:none !important}
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=number],select,textarea{
+  width:100%;border:1px solid var(--line);background:#FCFBF8;border-radius:10px;padding:10px 11px;font-size:15px;color:var(--ink);font-weight:500;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#141414;background:#fff;box-shadow:0 0 0 3px rgba(243,173,50,.35)}
+textarea{resize:vertical;min-height:90px;line-height:1.5}
+.hint{font-size:12px;color:var(--muted);font-weight:500}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:#FCFBF8;border-radius:999px;padding:6px 11px;font-size:13px;font-weight:600;cursor:pointer;user-select:none;color:var(--ink)}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff}
+.chip.add{border-style:dashed;color:var(--green-2)}
+.seg{display:inline-flex;background:#F0ECE4;border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button.on{background:#fff;color:var(--green);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--green);color:#fff;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.btn.o{background:var(--yellow);color:#141414}
+.btn.ghost{background:transparent;color:var(--green);border:1px solid var(--line)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.icon{border:0;background:transparent;width:32px;height:32px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:16px;display:grid;place-items:center}
+.icon:hover{background:#F0ECE4;color:var(--ink)}
+.sub{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 6px}
+
+/* locations */
+.loc{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#FDFCFA;position:relative}
+.loc-h{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.loc-h .badge{background:var(--yellow);color:#141414;font-weight:800;font-size:12px;border-radius:8px;padding:4px 8px}
+.loc-h .t{flex:1;font-weight:700}
+.loc .grid{grid-template-columns:110px 1fr 1fr}
+@media (max-width:620px){.loc .grid{grid-template-columns:1fr 1fr}.loc .grid .wide{grid-column:1/-1}}
+.acts{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.act{display:flex;gap:6px;align-items:center}
+.act input{flex:1;padding:8px 10px;font-size:14px}
+.addloc{display:flex;flex-wrap:wrap;gap:6px}
+
+/* expenses */
+.exp{display:grid;grid-template-columns:1.4fr 110px 1.3fr 32px;gap:6px;align-items:center;margin-bottom:6px}
+.exp input,.exp select{padding:8px 9px;font-size:14px}
+@media (max-width:620px){.exp{grid-template-columns:1fr 100px 32px}.exp .how{grid-column:1/3}}
+.totals{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tot{background:var(--green-soft);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--green)}
+.tot b{display:block;font-size:16px;color:var(--ink)}
+.tot.or{background:var(--orange-soft);color:#7A5208}
+
+/* bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(247,244,238,.94);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));z-index:30}
+.bar .in{max-width:880px;margin:0 auto;display:flex;gap:8px;align-items:center}
+.bar .st{flex:1;font-size:12px;color:var(--muted)}
+@media (max-width:620px){.bar .st{display:none}.bar .in{justify-content:space-between}.bar .btn{flex:1;justify-content:center}.loc .grid .wide{grid-column:1/-1 !important}}
+
+/* preview */
+.pv-tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.pv-wrap{background:#E9E4DA;border-radius:var(--r);padding:14px;overflow:hidden}
+.pv-scale{transform-origin:top left}
+.doc{width:794px;background:#fff;color:#1B2422;padding:46px 54px 40px;font-family:Manrope,sans-serif;font-size:14px;line-height:1.5;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.doc .dh{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--green);padding-bottom:16px;margin-bottom:22px}
+.doc .dh .brand svg{width:46px;height:46px}
+.doc .dh .wm b{font-size:16px}
+.doc .dh .ttl{text-align:right}
+.doc .dh .ttl div{font-size:26px;font-weight:800;color:var(--green);letter-spacing:-.01em;line-height:1.1}
+.doc .dh .ttl span{font-size:12.5px;color:var(--muted)}
+.doc .facts{width:100%;border-collapse:collapse;margin-bottom:20px}
+.doc .facts td{padding:7px 0;border-bottom:1px solid #EEE9E0;vertical-align:top}
+.doc .facts td:first-child{width:190px;color:var(--muted);font-weight:600;font-size:13px;padding-right:14px}
+.doc .facts td:last-child{font-weight:600}
+.doc .day{background:var(--yellow);color:#141414;border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.doc .day .l{font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.doc .day .d{font-size:21px;font-weight:800;line-height:1.2}
+.doc .day .p{font-size:13px;opacity:.9;text-align:right;max-width:300px}
+.doc h3{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:var(--orange);margin:22px 0 10px;font-weight:800}
+.doc .note{background:#FFF7E6;border-left:3px solid var(--yellow);padding:10px 14px;border-radius:0 10px 10px 0;margin:0 0 12px;white-space:pre-wrap}
+.doc .tl{position:relative;padding-left:0}
+.doc .stop{display:grid;grid-template-columns:78px 1fr;gap:14px;margin-bottom:14px}
+.doc .stop .tm{font-size:20px;font-weight:800;color:var(--green);line-height:1.1;padding-top:2px}
+.doc .stop .bx{border:1px solid #E6E0D5;border-radius:12px;padding:12px 16px}
+.doc .stop .nm{font-weight:800;font-size:15.5px}
+.doc .stop .ad{color:var(--muted);font-size:13px;margin-bottom:6px}
+.doc .stop ul{margin:6px 0 0;padding-left:18px}
+.doc .stop li{margin:2px 0}
+.doc .stop .du{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;color:#141414;background:var(--orange-soft);border-radius:6px;padding:2px 8px}
+.doc .stop .nt{margin-top:6px;font-size:13px;color:#4B5653;white-space:pre-wrap}
+.doc .docs{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px}
+.doc .docs div{display:flex;gap:8px;align-items:flex-start}
+.doc .docs div:before{content:"";width:13px;height:13px;border:1.6px solid var(--green);border-radius:3px;flex:none;margin-top:4px}
+.doc .ex{width:100%;border-collapse:collapse}
+.doc .ex th{text-align:left;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;border-bottom:1.5px solid #DDD6CA}
+.doc .ex td{padding:8px;border-bottom:1px solid #EEE9E0;vertical-align:top}
+.doc .ex td.sum{white-space:nowrap;font-weight:700;text-align:right}
+.doc .ex th.sum{text-align:right}
+.doc .ex tr.paid td{color:#8A9491}
+.doc .ex tfoot td{font-weight:800;border-bottom:0;padding-top:10px}
+.doc .kpis{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.doc .kpi{flex:1;min-width:150px;background:#F4F1EA;border-radius:10px;padding:9px 12px;font-size:12px;color:var(--muted);font-weight:600}
+.doc .kpi b{display:block;font-size:17px;color:var(--ink)}
+.doc .kpi.or{background:var(--orange-soft)}
+.doc .story p{margin:0 0 9px}
+.doc .ft{margin-top:22px;padding-top:12px;border-top:1px solid #E6E0D5;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.doc .ft .ag{font-size:13px;color:var(--muted)}
+.doc .ft .ag b{display:block;color:var(--ink);font-size:15px}
+.doc .ft .ag a{color:var(--green)}
+.doc .ft .bye{font-size:13px;color:#141414;font-weight:700;text-align:right}
+
+/* archive */
+.arch-item{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:8px}
+.arch-item .m{flex:1;min-width:0}
+.arch-item .m b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arch-item .m span{font-size:12.5px;color:var(--muted)}
+.st-pill{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;background:#EEE;white-space:nowrap}
+.st-pill.s0{background:#F0ECE4;color:#7A6F5E}.st-pill.s1{background:var(--orange-soft);color:#7A5208}.st-pill.s2{background:#E3F1E6;color:#1E6B34}.st-pill.s3{background:#E3E7F3;color:#3E4F86}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+
+/* toast & modal */
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:60;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.modal{position:fixed;inset:0;background:rgba(20,28,26,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal.on{display:flex}
+.modal .box{background:#fff;border-radius:16px;padding:18px;max-width:520px;width:100%;max-height:88vh;overflow:auto}
+.modal .box h3{margin:0 0 10px;color:var(--green)}
+.modal img{max-width:100%;border:1px solid var(--line);border-radius:8px}
+#render{position:fixed;left:-20000px;top:0}
+.logo-big{display:flex;flex-direction:column;align-items:center;gap:14px;padding:24px;background:#FCFBF8;border-radius:12px;border:1px dashed var(--line)}
+.offline{background:#DD1C1C;color:#fff;font-size:13px;font-weight:600;text-align:center;padding:6px;border-radius:10px;margin-bottom:8px}
+.login{max-width:420px;margin:30px auto}
+.help ol,.help ul{margin:0;padding-left:20px}.help li{margin:6px 0}
+.sum-t{width:100%;border-collapse:collapse;font-size:14px}.sum-t th{text-align:left;font-size:12px;color:var(--muted);padding:6px;border-bottom:1.5px solid var(--line)}.sum-t td{padding:8px 6px;border-bottom:1px solid var(--line)}.sum-t .r{text-align:right;white-space:nowrap}
+.tabs button[hidden]{display:none}
+@media (max-width:620px){
+  .tabs button{font-size:13px;padding:9px 2px;white-space:nowrap}
+  .arch-item{flex-wrap:wrap;gap:6px 8px}
+  .arch-item .m{flex-basis:100%}
+  .arch-item .st-pill{margin-right:auto}
+  .sum-t{font-size:13px}
+}
+.agent-row{display:grid;grid-template-columns:1fr 1fr 32px;gap:6px;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand" id="brandTop"></div>
+  </div>
+  <div id="offline" class="offline" hidden>Нет связи с сервером — черновик сохраняется в телефоне</div>
+  <div class="tabs" id="tabs">
+    <button data-v="form" class="on">Заполнить</button>
+    <button data-v="preview">Просмотр</button>
+    <button data-v="archive">Мои планы</button>
+    <button data-v="summary" hidden>Сводка</button>
+    <button data-v="more">Ещё</button>
+  </div>
+
+  <!-- FORM -->
+  <section id="v-form"></section>
+
+  <!-- PREVIEW -->
+  <section id="v-preview" hidden>
+    <div class="pv-tools">
+      <button class="btn o" id="bPdf">⬇ PDF для клиента</button>
+      <button class="btn" id="bPng">🖼 Картинкой</button>
+      <button class="btn ghost" id="bWa">💬 WhatsApp текстом</button>
+      <button class="btn ghost" id="bTg">✈️ Telegram текстом</button>
+      <button class="btn ghost" id="bTxt">📋 Копировать текст</button>
+    </div>
+    <div class="hint" style="margin-bottom:10px">PDF — аккуратный документ на А4: на телефоне его можно сразу отправить в мессенджер. Картинка — если клиент не любит открывать файлы. Текст — если удобнее читать прямо в чате (если указан телефон клиента, WhatsApp откроется сразу с ним).</div>
+    <div class="pv-wrap" id="pvWrap"><div class="pv-scale" id="pvScale"></div></div>
+  </section>
+
+  <!-- ARCHIVE -->
+  <section id="v-archive" hidden>
+    <div class="card">
+      <h2><span id="aTitle">Мои планы</span><span class="sp"></span><button class="btn ghost sm" id="aReload">↻ Обновить</button></h2>
+      <div class="row" style="margin-bottom:10px">
+        <input type="text" id="aSearch" placeholder="Поиск: фамилия, адрес, объект…" style="flex:1;min-width:180px">
+        <select id="aAgent" style="width:auto"></select>
+        <select id="aStatus" style="width:auto"></select>
+      </div>
+      <div id="aList"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="v-summary" hidden>
+    <div class="card"><h2>Сводка<span class="sp"></span><select id="sMonth" style="width:auto"></select></h2><div id="sBody"></div></div>
+  </section>
+  <section id="v-more" hidden></section>
+  <section id="v-login" hidden></section>
+</div>
+
+<div class="bar" id="bar"><div class="in">
+  <div class="st" id="saveSt">Черновик сохраняется автоматически</div>
+  <button class="btn ghost sm" id="bNew">＋ Новый</button>
+  <button class="btn sm" id="bSave">Сохранить</button>
+  <button class="btn o sm" id="bGo">Готово →</button>
+</div></div>
+
+<div id="render"></div>
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+
+<datalist id="dlBanks"><option>Сбербанк</option><option>ВТБ</option><option>Альфа-Банк</option><option>ДомРФ</option><option>Т-Банк</option><option>Газпромбанк</option><option>Транскапиталбанк</option><option>Россельхозбанк</option><option>Уралсиб</option><option>Совкомбанк</option></datalist>
+<datalist id="dlAddr"></datalist>
+<datalist id="dlDur"><option>около 0,5–1 часа</option><option>около 1 часа</option><option>около 1–1,5 часа</option><option>около 1–2 часов</option><option>около 2 часов</option></datalist>
+<datalist id="dlKeys"><option>Сразу после сделки</option><option>После поступления денег продавцу</option><option>В течение 5 календарных дней после полного расчёта</option><option>В течение 10 дней после регистрации</option><option>В течение 14 календарных дней после оплаты</option><option>В удобный обеим сторонам день — договоримся</option></datalist>
+
+<script>
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { if (v === null || v === undefined) return 0; const s = String(v).replace(/\s/g,'').replace(',', '.').replace(/[^\d.\-]/g,''); const n = parseFloat(s); return isNaN(n) ? 0 : n; };
+const money = n => { n = Math.round(num(n)*100)/100; const [i,d] = String(Math.abs(n)).split('.'); return (n<0?'−':'') + i.replace(/\B(?=(\d{3})+(?!\d))/g,' ') + (d ? ','+d.padEnd(2,'0') : '') + ' ₽'; };
+const nice = v => { const s = String(v||'').trim(); if (!s) return ''; return /^[\d\s.,]+$/.test(s) ? money(s) : s; };
+const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const WD = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+function fmtDate(iso){ if(!iso) return ''; const [y,m,d] = iso.split('-').map(Number); const dt = new Date(y,m-1,d); return `${String(d).padStart(2,'0')} ${MONTHS[m-1]} ${y} года, ${WD[dt.getDay()]}`; }
+function fmtDateShort(iso){ if(!iso) return ''; const [y,m,d] = iso.split('-').map(Number); return `${d} ${MONTHS[m-1]}`; }
+function lsGet(k, def){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; }catch(e){ return def; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+let toastT; function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2600); }
+function modal(html){ $('#modalBox').innerHTML = html; $('#modal').classList.add('on'); }
+function closeModal(){ $('#modal').classList.remove('on'); }
+$('#modal').addEventListener('click', e => { if (e.target.id==='modal' || e.target.closest('[data-close]')) closeModal(); });
+
+/* ================= logo ================= */
+const LOGO = 'data:image/png;base64,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';
+function logoSVG(size){ return `<svg viewBox="0 0 64 64" ${size?`width="${size}" height="${size}"`:''} xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="16" fill="#1F4D45"/><path d="M13 30.5 32 15l19 15.5" fill="none" stroke="#F7F1E6" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 28.5V47a3 3 0 0 0 3 3h20a3 3 0 0 0 3-3V28.5" fill="none" stroke="#F7F1E6" stroke-width="4.6" stroke-linejoin="round"/><path d="M28.5 33.2 39.6 40l-11.1 6.8z" fill="#E8834A" stroke="#E8834A" stroke-width="2.4" stroke-linejoin="round"/></svg>`; }
+function brandHTML(sub){ return `<img class="logo" src="${LOGO}" alt="Пора действовать">${sub?`<div class="wm"><small>${esc(sub)}</small></div>`:''}`; }
+
+/* ================= presets ================= */
+const METHODS = ['Ипотека','Наличные','Безнал / перевод','Аккредитив','СБР (безопасные расчёты)','Банковская ячейка','Маткапитал','Трансферация (погашение ипотеки продавца)','Электронная регистрация','Регистрация через МФЦ','Нотариальная сделка'];
+const LOC_TYPES = {
+  bank:   {label:'Банк', icon:'🏦', name:'Сбербанк', acts:['Открытие счёта / аккредитива','Размещение первоначального взноса','Подписание кредитного договора','Подписание договора купли-продажи','Подписание расписки','Выпуск электронной подписи','Отправка документов на регистрацию (электронно)','Открытие счёта безопасных расчётов','Аренда ячейки и закладка денег','Снятие наличных','Передача денег']},
+  mfc:    {label:'МФЦ', icon:'🏛', name:'МФЦ', acts:['Подписание договора купли-продажи','Подписание расписки','Передача денег','Сдача документов на регистрацию','Оплата госпошлины']},
+  vyezd:  {label:'Выездной регистратор', icon:'🗂', name:'Выездной регистратор МФЦ', acts:['Подписание договора купли-продажи','Подписание расписки','Передача денег','Сдача документов на регистрацию','Оплата услуг выездного регистратора','Оплата госпошлины']},
+  notary: {label:'Нотариус', icon:'⚖️', name:'Нотариус', acts:['Подписание договора купли-продажи у нотариуса','Нотариальное согласие супруга','Отправка документов на регистрацию нотариусом']},
+  dev:    {label:'Застройщик', icon:'🏗', name:'Офис застройщика', acts:['Подписание ДДУ / договора уступки','Подписание акта приёма-передачи','Получение справки о полной оплате']},
+  office: {label:'Офис агентства', icon:'🏠', name:'Офис «Пора действовать»', acts:['Подписание агентского договора','Подписание актов выполненных работ','Расчёт с агентством']},
+  other:  {label:'Другое', icon:'📍', name:'', acts:[]}
+};
+const DOCS = {
+  'Основные':['Паспорт (оригинал)','СНИЛС','ИНН (можно просто номер)','Заряженный телефон с интернетом','Установлено приложение банка / ДомКлик','Госключ установлен'],
+  'Семья':['Свидетельство о браке','Свидетельство о разводе','Брачный договор','Согласие супруга (нотариальное)','Свидетельства о рождении детей (оригиналы)','СНИЛС и ИНН детей','Прописка детей','Приказ органов опеки','Свидетельство о перемене фамилии'],
+  'Маткапитал':['Сертификат на материнский капитал','Справка об остатке маткапитала'],
+  'Объект':['Документы-основания (ДКП, ДДУ, дарение, мена)','Акт приёма-передачи от застройщика','Справка о полной оплате','Выписка ЕГРН','Технический паспорт','Справка о зарегистрированных (форма 40)','Квитанции ЖКУ и чек об оплате','Документы на оборудование и приборы учёта','Предварительный договор (его вернём)','Кредитный договор продавца (для погашения)'],
+  'Иностранцам':['Нотариальный перевод паспорта','ВНЖ / регистрация','Перевод свидетельства о браке']
+};
+const HOW = ['','уже оплачено','заранее по ссылке','на сделке, безнал','на сделке, наличными','на сделке, налом или безналом','в МФЦ через Сбербанк Онлайн','в МФЦ наличными','после сделки, наличными','после сделки, переводом','после получения денег'];
+const EXP_PRESETS = [
+  ['Электронная регистрация','', 'на сделке, безнал'],
+  ['Сервис безопасных расчётов','3400','на сделке, безнал'],
+  ['Аккредитив','2500','на сделке, безнал'],
+  ['Госпошлина','4000','на сделке, безнал'],
+  ['Госпошлина на землю','750','на сделке, безнал'],
+  ['Страхование','','заранее по ссылке'],
+  ['Оценка','','уже оплачено'],
+  ['Выездной регистратор','1000','на сделке, наличными'],
+  ['Нотариус','','на сделке, безнал'],
+  ['Аренда ячейки','','на сделке, безнал'],
+  ['Комиссия банка','','на сделке, безнал']
+];
+const STATUSES = ['Черновик','Отправлен клиенту','Сделка проведена','Отменена'];
+const ADDR_SEED = ['Сбербанк, Тверитина 34','Сбербанк, Щорса 29','Сбербанк, Малышева 31','Сбербанк, Малышева 114','Сбербанк, Шаманова 26','Сбербанк, Горького 17','ВТБ, Ленина 24','ДомРФ, Декабристов 69','МФЦ, Рощинская 21','Выездной регистратор, 8 Марта 146'];
+
+/* ================= state ================= */
+function blankPlan(){
+  return {
+    id: uid(), createdAt: Date.now(), updatedAt: Date.now(), status: 'Черновик',
+    clientRole: 'Покупатель', seller:'', buyer:'', clientPhone:'', present:'',
+    object:'', price:'', priceContract:'',
+    commType:'pct', commValue:'', commMin:'', commPaid:'', commWhen:'наличными после сделки', commShow:true, commInExp:true,
+    methods:[], bank:'', deposit:'', depositKind:'Аванс', downPayment:'', cashBring:'', cashNote:'',
+    date:'', intro:'',
+    locations:[], docs:['Паспорт (оригинал)','СНИЛС','ИНН (можно просто номер)'], docsCustom:[], docsNote:'',
+    expenses:[], keys:'', after:'', story:'', storyAuto:true,
+    agentId:''
+  };
+}
+let session = lsGet('pd_session', null);          // {token, me}
+let me = session ? session.me : null;
+let settings = Object.assign({agency:'Пора действовать', city:'Екатеринбург', phone:'', bye:'Если будут вопросы — пишите, я на связи!', customDocs:[]}, lsGet('pd_settings', {}));
+let agents = lsGet('pd_agents', []);
+let plans = lsGet('pd_plans', []);                 // cache of server plans
+let plan = Object.assign(blankPlan(), lsGet('pd_draft', {}));
+if (plan.clientRole !== 'Продавец') plan.clientRole = 'Покупатель';
+let online = true;
+const isAdmin = () => me && me.role === 'admin';
+
+/* ================= server ================= */
+const API = (window.API_URL || '').trim();
+async function api(action, data){
+  if (!API || /ВСТАВЬ/.test(API)) throw new Error('Не указан адрес сервера в config.js');
+  let res;
+  try {
+    res = await fetch(API, {method:'POST', body: JSON.stringify(Object.assign({action, token: session && session.token}, data||{})), redirect:'follow'});
+  } catch(e){ setOnline(false); throw new Error('Нет связи с сервером'); }
+  let j; try { j = await res.json(); } catch(e){ setOnline(false); throw new Error('Сервер ответил странно — проверь адрес в config.js'); }
+  setOnline(true);
+  if (!j.ok){ if (j.error === 'AUTH'){ logout(true); throw new Error('Нужно войти заново'); } throw new Error(j.error || 'Ошибка сервера'); }
+  return j;
+}
+function setOnline(v){ online = v; const b = $('#offline'); if (b) b.hidden = v; }
+
+function commAmount(p){
+  const price = num(p.price), v = num(p.commValue);
+  let a = p.commType === 'pct' ? price * v / 100 : v;
+  if (p.commType === 'pct' && num(p.commMin) > a) a = num(p.commMin);
+  return Math.round(a);
+}
+function commRest(p){ return Math.max(0, commAmount(p) - num(p.commPaid)); }
+function allExpenses(p){
+  const list = p.expenses.filter(e => e.name || e.amount).map(e => ({...e}));
+  if (p.commShow && p.commInExp && commAmount(p) > 0){
+    const rest = commRest(p);
+    list.push({id:'comm', name:'Стоимость услуг агентства' + (num(p.commPaid)>0 ? ` (остаток, ${money(p.commPaid)} уже внесено)` : ''), amount: String(rest), how: p.commWhen || '', comm:true});
+  }
+  return list;
+}
+function totals(p){
+  const list = allExpenses(p);
+  let all=0, paid=0, cash=0;
+  list.forEach(e => { const a = num(e.amount); all += a; if (/уже оплачено/.test(e.how)) paid += a; else if (/налич|налом/.test(e.how) && !/безнал/.test(e.how)) cash += a; });
+  return {all, paid, toPay: all - paid, cash, cashTotal: cash + num(p.cashBring)};
+}
+
+/* ================= persistence ================= */
+let saveTimer, saving = false, saveAgain = false;
+const known = () => new Set(plans.map(p => p.id));
+function touch(){
+  plan.updatedAt = Date.now();
+  lsSet('pd_draft', plan);
+  clearTimeout(saveTimer);
+  if (known().has(plan.id)){ $('#saveSt').textContent = 'Изменения сохраняются…'; saveTimer = setTimeout(() => saveToArchive(true), 2500); }
+  else $('#saveSt').textContent = 'Черновик на этом устройстве — нажми «Сохранить»';
+}
+function cachePlan(p){ plans = plans.filter(x => x.id !== p.id); plans.unshift(JSON.parse(JSON.stringify(p))); lsSet('pd_plans', plans); }
+async function saveToArchive(silent){
+  if (saving){ saveAgain = true; return; }
+  saving = true;
+  if (!plan.agentId && me) plan.agentId = me.id;
+  const copy = JSON.parse(JSON.stringify(plan));
+  try {
+    const r = await api('savePlan', {plan: copy});
+    if (r.plan && r.plan.id === plan.id){ plan.agentId = r.plan.agentId; plan.updatedAt = r.plan.updatedAt; }
+    cachePlan(r.plan || copy); lsSet('pd_draft', plan);
+    $('#saveSt').textContent = 'Сохранено ' + new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    if (!silent) toast('Сохранено в базу агентства');
+  } catch(e){
+    $('#saveSt').textContent = 'Не сохранено: ' + e.message;
+    if (!silent) toast('Не сохранилось: ' + e.message + '. Черновик остался на устройстве.');
+  }
+  saving = false;
+  if (saveAgain){ saveAgain = false; saveToArchive(true); }
+  if (!$('#v-archive').hidden) renderArchive();
+}
+
+/* ================= FORM render ================= */
+function field(label, key, opts={}){
+  const v = esc(plan[key] ?? '');
+  const ph = opts.ph ? `placeholder="${esc(opts.ph)}"` : '';
+  const list = opts.list ? `list="${opts.list}"` : '';
+  const inp = opts.area ? `<textarea data-k="${key}" ${ph} rows="${opts.rows||3}">${v}</textarea>` : `<input type="${opts.type||'text'}" data-k="${key}" value="${v}" ${ph} ${list} ${opts.mode?`inputmode="${opts.mode}"`:''}>`;
+  return `<label class="f ${opts.cls||''}">${label}${inp}${opts.hint?`<span class="hint">${opts.hint}</span>`:''}</label>`;
+}
+function renderForm(){
+  if (!plan.agentId && me) plan.agentId = me.id;
+  const agentsOpts = agents.filter(a=>a.active!==false || a.id===plan.agentId).map(a => `<option value="${esc(a.id)}" ${a.id===plan.agentId?'selected':''}>${esc(a.name)}</option>`).join('');
+  const curAg = agentOf(plan);
+  const c = commAmount(plan);
+  $('#v-form').innerHTML = `
+  <div class="card">
+    <h2><span class="n">1</span>Стороны и объект<span class="sp"></span>
+      <select data-k="status" style="width:auto;font-size:13px;padding:6px 8px">${STATUSES.map(s=>`<option ${s===plan.status?'selected':''}>${s}</option>`).join('')}</select></h2>
+    <div class="row" style="margin-bottom:12px"><span class="hint">План для:</span>
+      <div class="seg" data-seg="clientRole">${['Покупатель','Продавец'].map(r=>`<button class="${plan.clientRole===r?'on':''}" data-val="${r}">${r==='Покупатель'?'покупателя':'продавца'}</button>`).join('')}</div>
+    </div>
+    <div class="grid">
+      ${field('Продавец','seller',{ph:'ФИО, через запятую если несколько'})}
+      ${field('Покупатель','buyer',{ph:'ФИО'})}
+      ${field('Телефон клиента','clientPhone',{ph:'+7 … — чтобы сразу открыть WhatsApp',mode:'tel'})}
+      ${field('Объект','object',{cls:'full',ph:'г. Екатеринбург, ул. …, д. …, кв. …'})}
+      ${field('Стоимость','price',{ph:'5 600 000',mode:'decimal'})}
+      ${field('Стоимость в договоре (если отличается)','priceContract',{ph:'необязательно'})}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">2</span>Расчёт и деньги</h2>
+    <div class="sub" style="margin-top:0">Способ расчёта</div>
+    <div class="chips" data-chips="methods">${METHODS.map(m=>`<span class="chip ${plan.methods.includes(m)?'on':''}" data-val="${esc(m)}">${esc(m)}</span>`).join('')}</div>
+    <div class="grid" style="margin-top:12px">
+      ${field('Банк','bank',{list:'dlBanks',ph:'Сбербанк'})}
+      <label class="f">Аванс / задаток за объект
+        <div class="row" style="flex-wrap:nowrap"><select data-k="depositKind" style="width:110px">${['Аванс','Задаток'].map(x=>`<option ${x===plan.depositKind?'selected':''}>${x}</option>`).join('')}</select><input type="text" data-k="deposit" value="${esc(plan.deposit)}" placeholder="0 — не вносился" inputmode="decimal"></div></label>
+      ${field('Первоначальный взнос','downPayment',{ph:'если ипотека',mode:'decimal'})}
+      ${field('Принести наличными на сделку','cashBring',{ph:'ПВ, передача денег, остаток…',mode:'decimal',hint:'войдёт в итог «иметь наличными»'})}
+      ${field('Комментарий по деньгам','cashNote',{cls:'full',area:true,rows:2,ph:'Например: ПВ снять заранее в Сбере на Куйбышева 67 — банк открывается в 9:00, успеть до 12'})}
+    </div>
+    <div class="sub">Стоимость услуг агентства</div>
+    <div class="row" style="margin-bottom:8px">
+      <div class="seg" data-seg="commType"><button class="${plan.commType==='pct'?'on':''}" data-val="pct">в %</button><button class="${plan.commType==='sum'?'on':''}" data-val="sum">суммой</button></div>
+      <label class="row hint" style="gap:6px"><input type="checkbox" data-k="commShow" ${plan.commShow?'checked':''}> показывать в плане</label>
+      <label class="row hint" style="gap:6px"><input type="checkbox" data-k="commInExp" ${plan.commInExp?'checked':''}> добавить в расходы</label>
+    </div>
+    <div class="grid">
+      ${field(plan.commType==='pct'?'Процент':'Сумма','commValue',{ph:plan.commType==='pct'?'3':'150 000',mode:'decimal'})}
+      ${plan.commType==='pct'?field('Но не менее','commMin',{ph:'120 000',mode:'decimal'}):'<div></div>'}
+      ${field('Уже получено (аванс агентству)','commPaid',{ph:'0',mode:'decimal'})}
+      ${field('Когда и как оплачивается','commWhen',{list:'dlHow'})}
+    </div>
+    <div class="hint" id="commCalc" style="margin-top:8px">${c?`Итого услуги: <b>${money(c)}</b>${num(plan.commPaid)?`, остаток <b>${money(commRest(plan))}</b>`:''}`:''}</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">3</span>День сделки и локации</h2>
+    <div class="grid">
+      ${field('Дата сделки','date',{type:'date',hint:plan.date?fmtDate(plan.date):''})}
+      ${field('Кто присутствует на сделке','present',{ph:'Покупатель лично, супруг по желанию'})}
+      ${field('Важное перед сделкой','intro',{cls:'full',area:true,rows:2,ph:'Например: прийти нужно к 08:50, сделка начнётся в 9:00'})}
+    </div>
+    <div class="sub">Маршрут дня</div>
+    <div id="locs">${plan.locations.map((l,i)=>locHTML(l,i)).join('') || '<div class="hint" style="margin-bottom:10px">Добавь первую точку — банк, МФЦ, нотариус…</div>'}</div>
+    <div class="addloc">${Object.entries(LOC_TYPES).map(([k,t])=>`<button class="btn ghost sm" data-addloc="${k}">＋ ${t.icon} ${t.label}</button>`).join('')}</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">4</span>Документы с собой</h2>
+    ${Object.entries(DOCS).map(([g,list])=>`<div class="sub">${g}</div><div class="chips" data-docs>${list.map(d=>`<span class="chip ${plan.docs.includes(d)?'on':''}" data-val="${esc(d)}">${esc(d)}</span>`).join('')}</div>`).join('')}
+    <div class="sub">Свои документы</div>
+    ${customDocs().length?`<div class="chips" data-docs style="margin-bottom:8px">${customDocs().map(d=>`<span class="chip ${plan.docs.includes(d)?'on':''}" data-val="${esc(d)}">${esc(d)}<b data-docdel="${esc(d)}" title="Убрать из списка" style="margin-left:8px;opacity:.6">✕</b></span>`).join('')}</div>`:''}
+    <div class="row" style="flex-wrap:nowrap"><input type="text" id="newDoc" placeholder="Добавить свой документ, например: Договор дарения" style="flex:1"><button class="btn sm" id="addDoc">＋ Добавить</button></div>
+    <div class="hint" style="margin-top:4px">Свой документ сохранится в списке и для следующих планов.</div>
+    <div style="margin-top:12px">${field('Примечание к документам','docsNote',{ph:'Всё в оригиналах, у всех участников сделки'})}</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">5</span>Расходы</h2>
+    <div id="exps">${plan.expenses.map(expHTML).join('')}</div>
+    <div class="chips" style="margin-top:6px">${EXP_PRESETS.map((e,i)=>`<span class="chip add" data-addexp="${i}">＋ ${esc(e[0])}</span>`).join('')}<span class="chip add" data-addexp="-1">＋ своя строка</span></div>
+    <div class="totals" id="totals"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">6</span>Как будет проходить сделка<span class="sp"></span><button class="btn ghost sm" id="bGen">✨ Собрать текст</button></h2>
+    <div class="hint" style="margin-bottom:8px">Текст собирается сам из маршрута и способа расчёта. Можно править — тогда автосборка отключится, пока снова не нажмёшь «Собрать текст».</div>
+    <textarea data-k="story" rows="10" placeholder="Мы приходим в банк…">${esc(plan.story)}</textarea>
+    <div class="grid" style="margin-top:10px">
+      ${field('Передача ключей','keys',{list:'dlKeys',ph:'Сразу после сделки'})}
+      ${field('Что сделать после сделки','after',{area:true,rows:2,ph:'Переписать показания счётчиков, переоформить лицевые счета в УК…'})}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">7</span>Агент</h2>
+    ${isAdmin() ? `<select data-k="agentId">${agentsOpts}</select><div class="hint" style="margin-top:6px">Как руководитель, ты можешь оформить план на любого агента.</div>`
+      : `<div><b>${esc(curAg ? curAg.name : (me ? me.name : ''))}</b> ${curAg && curAg.phone ? '· '+esc(curAg.phone) : ''}</div>`}
+  </div>
+  <datalist id="dlHow">${HOW.filter(Boolean).map(h=>`<option>${h}</option>`).join('')}<option>наличными после сделки</option><option>переводом после сделки</option><option>после получения денег за объект</option></datalist>
+  `;
+  renderTotals();
+}
+function locHTML(l,i){
+  const t = LOC_TYPES[l.type] || LOC_TYPES.other;
+  const preset = t.acts.filter(a => !l.actions.includes(a));
+  return `<div class="loc" data-loc="${l.id}">
+    <div class="loc-h"><span class="badge">${i+1}</span><span class="t">${t.icon} ${esc(l.name || t.label)}</span>
+      <button class="icon" data-locmv="-1" title="Выше">↑</button><button class="icon" data-locmv="1" title="Ниже">↓</button><button class="icon" data-locdel title="Удалить">✕</button></div>
+    <div class="grid">
+      <label class="f">Время<input type="time" data-l="time" value="${esc(l.time)}"></label>
+      <label class="f wide">Название<input type="text" data-l="name" value="${esc(l.name)}" ${l.type==='bank'?'list="dlBanks"':''} placeholder="${esc(t.name||'Название')}"></label>
+      <label class="f wide">Адрес<input type="text" data-l="address" value="${esc(l.address)}" list="dlAddr" placeholder="ул. Тверитина 34"></label>
+      <label class="f wide" style="grid-column:span 2">По времени<input type="text" data-l="duration" value="${esc(l.duration)}" list="dlDur" placeholder="около 1 часа"></label>
+      <label class="f wide" style="grid-column:span 1">Кто подходит / когда<input type="text" data-l="who" value="${esc(l.who||'')}" placeholder="продавцы к 14:00"></label>
+    </div>
+    <div class="sub">Что делаем</div>
+    <div class="acts">${l.actions.map((a,j)=>`<div class="act"><span class="hint">•</span><input type="text" data-act="${j}" value="${esc(a)}"><button class="icon" data-actdel="${j}">✕</button></div>`).join('')}</div>
+    <div class="row" style="margin-top:8px;flex-wrap:nowrap"><select data-actsel style="flex:1"><option value="">＋ Добавить действие из списка…</option>${preset.map(a=>`<option>${esc(a)}</option>`).join('')}</select><button class="btn ghost sm" data-actadd="" style="white-space:nowrap">＋ своё</button></div>
+    <label class="f" style="margin-top:10px">Пояснение к этой точке<textarea data-l="note" rows="2" placeholder="Например: вывеска Century21 возле «Первого рыбного», вход с 8 Марта">${esc(l.note||'')}</textarea></label>
+  </div>`;
+}
+function expHTML(e){
+  return `<div class="exp" data-exp="${e.id}">
+    <input type="text" data-e="name" value="${esc(e.name)}" placeholder="Статья">
+    <input type="text" data-e="amount" value="${esc(e.amount)}" placeholder="Сумма" inputmode="decimal">
+    <select data-e="how" class="how">${HOW.map(h=>`<option value="${esc(h)}" ${h===e.how?'selected':''}>${h||'когда и как платим…'}</option>`).join('')}</select>
+    <button class="icon" data-expdel>✕</button>
+  </div>`;
+}
+function renderTotals(){
+  const t = totals(plan); const el = $('#totals'); if(!el) return;
+  const c = commAmount(plan);
+  el.innerHTML = `<div class="tot">Всего расходов<b>${money(t.all)}</b></div>
+    ${t.paid?`<div class="tot">Уже оплачено<b>${money(t.paid)}</b></div>`:''}
+    <div class="tot">Осталось оплатить<b>${money(t.toPay)}</b></div>
+    ${t.cashTotal?`<div class="tot or">Иметь наличными<b>${money(t.cashTotal)}</b></div>`:''}`;
+  const cc = $('#commCalc'); if (cc) cc.innerHTML = c?`Итого услуги: <b>${money(c)}</b>${num(plan.commPaid)?`, остаток <b>${money(commRest(plan))}</b>`:''}`:'';
+}
+
+/* ================= FORM events ================= */
+const F = $('#v-form');
+F.addEventListener('input', e => onFormInput(e.target));
+F.addEventListener('change', e => {
+  const el = e.target;
+  if (el.matches('[data-actsel]')){ if (el.value){ const l = plan.locations.find(x=>x.id===el.closest('[data-loc]').dataset.loc); l.actions.push(el.value); rerender(); } return; }
+  if (el.matches('select,input[type=checkbox]')) onFormInput(el);
+  if (el.matches('[data-k=price],[data-k=priceContract],[data-k=deposit],[data-k=downPayment],[data-k=cashBring],[data-k=commMin],[data-k=commPaid],[data-e=amount]') || (el.matches('[data-k=commValue]') && plan.commType==='sum')){
+    const v = el.value.trim(); if (/^[\d\s]+$/.test(v) && v){ el.value = v.replace(/\s/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,' '); onFormInput(el); }
+  }
+});
+function onFormInput(el){
+  if (el.matches && el.matches('[data-actsel]')) return;
+  if (el.dataset.k){
+    const k = el.dataset.k;
+    plan[k] = el.type === 'checkbox' ? el.checked : el.value;
+    if (k === 'story') plan.storyAuto = false;
+    if (k === 'date'){ const h = el.parentElement.querySelector('.hint'); if (h) h.textContent = fmtDate(el.value); }
+    if (['commShow','commInExp','commType'].includes(k)) { renderForm(); }
+  }
+  const locEl = el.closest('[data-loc]');
+  if (locEl){
+    const l = plan.locations.find(x => x.id === locEl.dataset.loc);
+    if (el.dataset.l){ l[el.dataset.l] = el.value; if (el.dataset.l==='name'){ locEl.querySelector('.loc-h .t').textContent = (LOC_TYPES[l.type]||LOC_TYPES.other).icon + ' ' + (el.value || LOC_TYPES[l.type].label); } }
+    if (el.dataset.act !== undefined) l.actions[+el.dataset.act] = el.value;
+  }
+  const expEl = el.closest('[data-exp]');
+  if (expEl && el.dataset.e){
+    const x = plan.expenses.find(z => z.id === expEl.dataset.exp); x[el.dataset.e] = el.value;
+  }
+  autoStory(); renderTotals(); touch();
+}
+F.addEventListener('click', e => {
+  const t = e.target;
+  const seg = t.closest('[data-seg] button');
+  if (seg){ plan[seg.parentElement.dataset.seg] = seg.dataset.val; renderForm(); autoStory(); touch(); return; }
+  const chip = t.closest('[data-chips="methods"] .chip');
+  if (chip){ const v = chip.dataset.val; plan.methods = plan.methods.includes(v) ? plan.methods.filter(x=>x!==v) : [...plan.methods, v]; chip.classList.toggle('on'); autoStory(); touch(); return; }
+  const dchip = !t.closest('[data-docdel]') && t.closest('[data-docs] .chip:not(.add)');
+  if (dchip){ const v = dchip.dataset.val; plan.docs = plan.docs.includes(v) ? plan.docs.filter(x=>x!==v) : [...plan.docs, v]; dchip.classList.toggle('on'); touch(); return; }
+  if (t.id === 'addDoc'){ addCustomDoc(); return; }
+  const dd = t.closest('[data-docdel]');
+  if (dd){ const v = dd.dataset.docdel; settings.customDocs = (settings.customDocs||[]).filter(x=>x!==v); plan.docsCustom = plan.docsCustom.filter(x=>x!==v); plan.docs = plan.docs.filter(x=>x!==v); lsSet('pd_settings', settings); api('removeCustomDoc',{doc:v}).catch(()=>{}); rerender(); return; }
+  const al = t.closest('[data-addloc]');
+  if (al){ addLocation(al.dataset.addloc); return; }
+  const locEl = t.closest('[data-loc]');
+  if (locEl){
+    const idx = plan.locations.findIndex(x => x.id === locEl.dataset.loc), l = plan.locations[idx];
+    if (t.closest('[data-locdel]')){ plan.locations.splice(idx,1); rerender(); return; }
+    const mv = t.closest('[data-locmv]'); if (mv){ const j = idx + (+mv.dataset.locmv); if (j>=0 && j<plan.locations.length){ [plan.locations[idx], plan.locations[j]] = [plan.locations[j], plan.locations[idx]]; rerender(); } return; }
+    const ad = t.closest('[data-actdel]'); if (ad){ l.actions.splice(+ad.dataset.actdel,1); rerender(); return; }
+    const aa = t.closest('[data-actadd]'); if (aa){ l.actions.push(aa.dataset.actadd); rerender(); if(!aa.dataset.actadd){ const ins = document.querySelectorAll(`[data-loc="${l.id}"] [data-act]`); ins[ins.length-1]?.focus(); } return; }
+  }
+  const ae = t.closest('[data-addexp]');
+  if (ae){ const i = +ae.dataset.addexp; const p = EXP_PRESETS[i]; plan.expenses.push({id:uid(), name:p?p[0]:'', amount:p?p[1]:'', how:p?p[2]:''}); rerender(); if(i<0||!p[1]){ const r = document.querySelector(`[data-exp="${plan.expenses[plan.expenses.length-1].id}"] [data-e="${i<0?'name':'amount'}"]`); r?.focus(); } return; }
+  const ed = t.closest('[data-expdel]');
+  if (ed){ const id = t.closest('[data-exp]').dataset.exp; plan.expenses = plan.expenses.filter(x=>x.id!==id); rerender(); return; }
+  if (t.id === 'bGen'){ plan.story = genStory(plan); plan.storyAuto = true; F.querySelector('[data-k=story]').value = plan.story; touch(); toast('Текст собран — можно править'); return; }
+  const g = t.closest('[data-goto]'); if (g){ show(g.dataset.goto); return; }
+});
+function customDocs(){ const preset = new Set(Object.values(DOCS).flat()); const out = []; [...(settings.customDocs||[]), ...plan.docsCustom, ...plan.docs].forEach(d => { if (d && !preset.has(d) && !out.includes(d)) out.push(d); }); return out; }
+function addCustomDoc(){
+  const i = $('#newDoc'); const v = (i?.value||'').trim(); if (!v){ i?.focus(); return; }
+  if (!plan.docsCustom.includes(v)) plan.docsCustom.push(v);
+  if (!plan.docs.includes(v)) plan.docs.push(v);
+  settings.customDocs = settings.customDocs || []; if (!settings.customDocs.includes(v)){ settings.customDocs.push(v); lsSet('pd_settings', settings); api('addCustomDoc',{doc:v}).then(r=>{ if(r.settings){ settings = Object.assign(settings, r.settings); lsSet('pd_settings', settings); } }).catch(()=>{}); }
+  rerender(); setTimeout(()=>$('#newDoc')?.focus(), 30); toast('Добавлено: ' + v);
+}
+F.addEventListener('keydown', e => { if (e.target.id==='newDoc' && e.key==='Enter'){ e.preventDefault(); addCustomDoc(); } });
+function rerender(){ const y = window.scrollY; renderForm(); window.scrollTo(0,y); autoStory(); touch(); }
+function addLocation(type){
+  const t = LOC_TYPES[type];
+  const prev = plan.locations[plan.locations.length-1];
+  let name = t.name;
+  if (type==='bank' && plan.bank && !plan.locations.some(l=>l.type==='bank')) name = plan.bank.split(/[+,]/)[0].trim();
+  plan.locations.push({id:uid(), type, name, address:'', time:'', duration: type==='bank'?'около 1–1,5 часа':'около 1 часа', who:'', note:'', actions: defaultActs(type)});
+  rerender();
+  setTimeout(()=>{ const el = document.querySelector(`[data-loc="${plan.locations[plan.locations.length-1].id}"]`); el?.scrollIntoView({behavior:'smooth',block:'center'}); el?.querySelector('[data-l=time]')?.focus(); }, 50);
+}
+function defaultActs(type){
+  const m = plan.methods;
+  if (type==='bank'){
+    const a = [];
+    if (m.includes('Банковская ячейка')) a.push('Аренда ячейки и закладка денег');
+    if (m.includes('Аккредитив')) a.push('Открытие счёта / аккредитива');
+    if (m.includes('СБР (безопасные расчёты)')) a.push('Открытие счёта безопасных расчётов');
+    if (m.includes('Ипотека')) a.push('Подписание кредитного договора');
+    a.push('Подписание договора купли-продажи');
+    if (num(plan.deposit)>0) a.push(`Подписание расписки на ${money(plan.deposit)}`);
+    if (m.includes('Электронная регистрация')) a.push('Отправка документов на регистрацию (электронно)');
+    return a;
+  }
+  if (type==='mfc' || type==='vyezd') return ['Сдача документов на регистрацию'];
+  if (type==='notary') return ['Подписание договора купли-продажи у нотариуса'];
+  return [];
+}
+function askText(title, ph, cb){
+  modal(`<h3>${esc(title)}</h3><input type="text" id="askIn" placeholder="${esc(ph)}"><div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn ghost" data-close>Отмена</button><button class="btn" id="askOk">Добавить</button></div>`);
+  const i = $('#askIn'); setTimeout(()=>i.focus(),30);
+  const ok = () => { const v = i.value.trim(); if (v){ closeModal(); cb(v); } };
+  $('#askOk').onclick = ok; i.onkeydown = e => { if (e.key==='Enter') ok(); };
+}
+
+/* ================= story generator ================= */
+function lc(s){ return s ? s.charAt(0).toLowerCase() + s.slice(1) : s; }
+function genStory(p){
+  const m = p.methods, out = [];
+  const forSeller = p.clientRole === 'Продавец';
+  const L = p.locations;
+  L.forEach((l,i) => {
+    const t = LOC_TYPES[l.type] || LOC_TYPES.other;
+    const place = [l.name || t.label, l.address].filter(Boolean).join(', ');
+    const acts = l.actions.filter(Boolean).map(lc);
+    let s = i===0 ? `Мы приходим${l.time?` к ${l.time}`:''} в ${place}.` : `Далее${l.time?` к ${l.time}`:''} едем в ${place}.`;
+    if (acts.length) s += ` Что делаем: ${acts.join('; ')}.`;
+    if (l.who) s += ` ${l.who.charAt(0).toUpperCase()+l.who.slice(1)}.`;
+    out.push(s);
+  });
+  if (m.includes('Банковская ячейка'))
+    out.push(`Деньги пересчитываем и закладываем в банковскую ячейку вместе с ${forSeller?'покупателем':'продавцом'}. Доступ к ячейке продавец получает после регистрации перехода права — по выписке ЕГРН. После изъятия денег продавец отдаёт расписку покупателю.`);
+  if (m.includes('Аккредитив'))
+    out.push(`Деньги размещаются на аккредитиве и лежат там до регистрации сделки. После перехода права собственности банк раскрывает аккредитив, и деньги поступают продавцу. На сделке уточним, раскрывается он автоматически или нужно будет показать документы в банке.`);
+  if (m.includes('СБР (безопасные расчёты)'))
+    out.push(`Расчёт через сервис безопасных расчётов: деньги размещаются на специальном счёте банка и после регистрации автоматически перечисляются продавцу, обычно в течение 1–2 рабочих дней.`);
+  if (m.includes('Трансферация (погашение ипотеки продавца)'))
+    out.push(`Договор будет с трансферацией: часть денег пойдёт на погашение остатка по ипотеке продавца, остальное — ${forSeller?'вам':'продавцу'} на счёт. Регистрация проходит, не дожидаясь снятия обременения.`);
+  const hasNotary = L.some(l=>l.type==='notary') || m.includes('Нотариальная сделка');
+  const hasMfc = L.some(l=>l.type==='mfc'||l.type==='vyezd') || m.includes('Регистрация через МФЦ');
+  if (hasNotary)
+    out.push(`Нотариус сам отправляет документы на регистрацию в электронном виде — обычно она проходит уже на следующий день. После регистрации нужно будет забрать у нотариуса зарегистрированный договор купли-продажи. Не забудьте!`);
+  else if (m.includes('Электронная регистрация') || (!hasMfc && L.some(l=>l.type==='bank')))
+    out.push(`Регистрация будет электронная. Это значит, что прямо в банке документы отправят в Росреестр в электронном виде, идти отдельно в МФЦ не нужно. Регистрация проходит за 1–3 рабочих дня, о ней придёт письмо на электронную почту и СМС, а выписка ЕГРН — на почту и в Госуслуги.${m.includes('Ипотека')?' Кредитный договор и график платежей выдадут сразу на сделке.':''}`);
+  if (hasMfc)
+    out.push(`В МФЦ сдаём документы на регистрацию. Вам выдадут опись, в которой будет написано, когда забирать готовые документы — обычно это 5–7 рабочих дней. Забирать по предварительной записи: через приложение «ВнеОчереди», услуга «получение готового результата». Записывайтесь на дату из описи или на день позже, чтобы наверняка.`);
+  if (m.includes('Маткапитал'))
+    out.push(`После регистрации покупатель подаёт заявление на распоряжение материнским капиталом (через МФЦ, Госуслуги или Соцфонд). Заявление рассматривают до 10 рабочих дней, после чего деньги перечисляют продавцу на счёт.`);
+  if (m.includes('Ипотека') && !m.includes('Электронная регистрация') && !hasNotary && !hasMfc && !L.length)
+    out.push(`На сделке подписываем кредитный договор и договор купли-продажи, банк отправляет документы на регистрацию.`);
+  return out.join('\n\n');
+}
+function autoStory(){ if (plan.storyAuto){ plan.story = genStory(plan); const ta = F.querySelector('[data-k=story]'); if (ta && document.activeElement !== ta) ta.value = plan.story; } }
+
+/* ================= DOCUMENT (client view) ================= */
+function agentOf(p){ return agents.find(a => a.id === p.agentId) || (me && p.agentId === me.id ? me : null); }
+function docHTML(p){
+  const t = totals(p), exps = allExpenses(p), ag = agentOf(p), c = commAmount(p);
+  const facts = [];
+  if (p.seller) facts.push(['Продавец', p.seller]);
+  if (p.buyer) facts.push(['Покупатель', p.buyer]);
+  if (p.object) facts.push(['Объект', p.object]);
+  if (p.price) facts.push(['Стоимость', nice(p.price) + (p.priceContract ? ` <span style="color:#6B7774;font-weight:500">(в договоре — ${esc(nice(p.priceContract))})</span>` : '')]);
+  if (p.methods.length) facts.push(['Способ расчёта', p.methods.filter(x=>x!=='Электронная регистрация'&&x!=='Регистрация через МФЦ').join(' + ') || p.methods.join(', ')]);
+  if (p.bank) facts.push(['Банк', p.bank]);
+  if (p.downPayment) facts.push(['Первоначальный взнос', nice(p.downPayment)]);
+  facts.push([`${p.depositKind} за объект`, num(p.deposit) > 0 ? `внесён — ${money(p.deposit)}` : 'не вносился']);
+  if (p.commShow && c) facts.push(['Стоимость услуг', `${money(c)}${p.commType==='pct'&&num(p.commValue)?` (${esc(p.commValue)}%)`:''}${num(p.commPaid)?` — ${money(p.commPaid)} уже внесено, остаток ${money(commRest(p))}`:''}`]);
+  const factsRows = facts.map(([k,v]) => `<tr><td>${esc(k)}</td><td>${k==='Стоимость'||k==='Стоимость услуг'?v:esc(v)}</td></tr>`).join('');
+
+  const stops = p.locations.map(l => {
+    const tt = LOC_TYPES[l.type] || LOC_TYPES.other;
+    return `<div class="stop blk"><div class="tm">${esc(l.time||'')}</div><div class="bx">
+      <div class="nm">${esc(l.name||tt.label)}</div>${l.address?`<div class="ad">${esc(l.address)}</div>`:''}
+      ${l.actions.filter(Boolean).length?`<ul>${l.actions.filter(Boolean).map(a=>`<li>${esc(a)}</li>`).join('')}</ul>`:''}
+      ${l.who?`<div class="nt">👥 ${esc(l.who)}</div>`:''}
+      ${l.note?`<div class="nt">${esc(l.note)}</div>`:''}
+      ${l.duration?`<span class="du">⏱ ${esc(l.duration)}</span>`:''}
+    </div></div>`;
+  }).join('');
+
+  const docsList = p.docs.filter(Boolean);
+  const exRows = exps.map(e => `<tr class="${/уже оплачено/.test(e.how)?'paid':''}"><td>${esc(e.name)}</td><td class="sum">${e.amount?money(e.amount):'—'}</td><td>${esc(e.how||'')}</td></tr>`).join('');
+  const story = (p.story||'').split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean).map(s=>`<p class="blk">${esc(s).replace(/\n/g,'<br>')}</p>`).join('');
+
+  return `<div class="doc" id="docRoot">
+    <div class="dh blk"><div class="brand">${brandHTML('')}</div>
+      <div class="ttl"><div>План сделки</div><span>${ag?`Ваш агент: <b style="color:#1B2422">${esc(ag.name)}</b>${ag.phone?' · '+esc(ag.phone):''}`:esc(settings.phone||'')}</span></div></div>
+    <table class="facts blk">${factsRows}</table>
+    ${p.date||p.present?`<div class="day blk"><div><div class="l">День сделки</div><div class="d">${esc(fmtDate(p.date)||'дата уточняется')}</div></div>${p.present?`<div class="p">${esc(p.present)}</div>`:''}</div>`:''}
+    ${p.intro?`<div class="note blk">${esc(p.intro)}</div>`:''}
+    ${p.cashNote?`<div class="note blk">${esc(p.cashNote)}</div>`:''}
+    ${stops?`<h3 class="blk">Маршрут дня</h3><div class="tl">${stops}</div>`:''}
+    ${docsList.length?`<h3 class="blk">С собой документы</h3><div class="docs blk">${docsList.map(d=>`<div>${esc(d)}</div>`).join('')}</div>${p.docsNote?`<div class="hint blk" style="margin-top:8px;color:#6B7774">${esc(p.docsNote)}</div>`:''}`:''}
+    ${exps.length?`<h3 class="blk">Расходы: когда и как платим</h3><table class="ex blk"><thead><tr><th>Статья</th><th class="sum">Сумма</th><th>Когда и как</th></tr></thead><tbody>${exRows}</tbody><tfoot><tr><td>Итого расходы</td><td class="sum">${money(t.all)}</td><td></td></tr></tfoot></table>
+      <div class="kpis blk">${t.paid?`<div class="kpi">Уже оплачено<b>${money(t.paid)}</b></div>`:''}<div class="kpi">Осталось оплатить<b>${money(t.toPay)}</b></div>${t.cashTotal?`<div class="kpi or">Иметь с собой наличными<b>${money(t.cashTotal)}</b></div>`:''}</div>`
+      : (num(p.cashBring)?`<div class="kpis blk"><div class="kpi or">Иметь с собой наличными<b>${money(p.cashBring)}</b></div></div>`:'')}
+    ${story?`<h3 class="blk">Как будет проходить сделка</h3><div class="story">${story}</div>`:''}
+    ${p.keys?`<h3 class="blk">Ключи</h3><p class="blk" style="margin:0">${esc(p.keys)}</p>`:''}
+    ${p.after?`<h3 class="blk">После сделки</h3><p class="blk" style="margin:0;white-space:pre-wrap">${esc(p.after)}</p>`:''}
+    <div class="ft" id="docFt"><div class="ag">${ag?`<b>${esc(ag.name)}</b>${esc(ag.phone||'')}`:`<b>${esc(settings.agency)}</b>${esc(settings.phone||'')}`}</div><div class="bye">${esc(settings.bye||'')}</div></div>
+  </div>`;
+}
+function glueFooter(root){ const ft = root.querySelector('#docFt'); const bl = [...root.querySelectorAll('.blk')].filter(e=>!e.closest('#docFt')); const last = bl[bl.length-1]; if (ft && last && last.tagName!=='TABLE'){ ft.style.whiteSpace='normal'; last.appendChild(ft); } }
+function renderPreview(){
+  $('#pvScale').innerHTML = docHTML(plan); glueFooter($('#pvScale'));
+  fitPreview();
+}
+function fitPreview(){
+  const wrap = $('#pvWrap'), sc = $('#pvScale'); if (!wrap || $('#v-preview').hidden) return;
+  const w = wrap.clientWidth - 28, k = Math.min(1, w / 794);
+  sc.style.transform = `scale(${k})`; sc.style.height = (sc.firstElementChild?.offsetHeight||0) * k + 'px'; sc.style.width = 794*k+'px';
+}
+window.addEventListener('resize', fitPreview);
+
+/* ================= text for messenger ================= */
+function planText(p){
+  const t = totals(p), exps = allExpenses(p), ag = agentOf(p), c = commAmount(p), L = [];
+  L.push('📋 *ПЛАН СДЕЛКИ*', '');
+  if (p.seller) L.push(`Продавец: ${p.seller}`);
+  if (p.buyer) L.push(`Покупатель: ${p.buyer}`);
+  if (p.object) L.push(`Объект: ${p.object}`);
+  if (p.price) L.push(`Стоимость: ${nice(p.price)}${p.priceContract?` (в договоре ${nice(p.priceContract)})`:''}`);
+  if (p.methods.length) L.push(`Способ расчёта: ${p.methods.filter(x=>x!=='Электронная регистрация'&&x!=='Регистрация через МФЦ').join(' + ') || p.methods.join(', ')}`);
+  if (p.bank) L.push(`Банк: ${p.bank}`);
+  if (p.downPayment) L.push(`Первоначальный взнос: ${nice(p.downPayment)}`);
+  L.push(`${p.depositKind} за объект: ${num(p.deposit)>0?money(p.deposit):'не вносился'}`);
+  if (p.commShow && c) L.push(`Стоимость услуг: ${money(c)}${num(p.commPaid)?` (внесено ${money(p.commPaid)}, остаток ${money(commRest(p))})`:''}`);
+  L.push('');
+  if (p.date) L.push(`📅 *День сделки: ${fmtDate(p.date)}*`);
+  if (p.present) L.push(p.present);
+  if (p.intro) L.push('', p.intro);
+  if (p.cashNote) L.push('', p.cashNote);
+  p.locations.forEach(l => {
+    const tt = LOC_TYPES[l.type]||LOC_TYPES.other;
+    L.push('', `🕙 *${l.time?l.time+' ':''}${l.name||tt.label}*${l.address?` (${l.address})`:''}`);
+    l.actions.filter(Boolean).forEach(a => L.push(`— ${a}`));
+    if (l.who) L.push(l.who);
+    if (l.note) L.push(l.note);
+    if (l.duration) L.push(`По времени ${l.duration}.`);
+  });
+  if (p.docs.length){ L.push('', '📄 *С собой документы:*'); p.docs.forEach(d => L.push(`— ${d}`)); if (p.docsNote) L.push(p.docsNote); }
+  if (exps.length){
+    L.push('', '💰 *Расходы:*');
+    exps.forEach(e => L.push(`— ${e.name}${e.amount?' — '+money(e.amount):''}${e.how?` (${e.how})`:''}`));
+    L.push(`Итого: ${money(t.all)}${t.paid?`, уже оплачено ${money(t.paid)}`:''}`);
+  }
+  if (t.cashTotal) L.push(`Иметь с собой наличными: ${money(t.cashTotal)}`);
+  if (p.story) L.push('', '📝 *Как будет проходить сделка:*', p.story);
+  if (p.keys) L.push('', `🔑 Ключи: ${p.keys}`);
+  if (p.after) L.push('', `После сделки: ${p.after}`);
+  L.push('', ag ? `Ваш агент: ${ag.name}${ag.phone?', '+ag.phone:''}` : settings.agency + (settings.phone?', '+settings.phone:''));
+  if (settings.bye) L.push(settings.bye);
+  return L.join('\n').replace(/ /g,' ');
+}
+async function copyText(txt){
+  try { await navigator.clipboard.writeText(txt); toast('Текст скопирован — вставь в WhatsApp или Telegram'); }
+  catch(e){
+    modal(`<h3>Скопируй текст</h3><textarea id="cpT" rows="14" style="font-size:13px">${esc(txt)}</textarea><div class="hint" style="margin:8px 0">Выдели всё и скопируй.</div><div class="row" style="justify-content:flex-end"><button class="btn" data-close>Готово</button></div>`);
+    const ta = $('#cpT'); ta.focus(); ta.select();
+  }
+}
+
+/* ================= export PDF / PNG ================= */
+async function renderCanvas(){
+  const host = $('#render'); host.innerHTML = docHTML(plan); glueFooter(host);
+  try { await document.fonts.ready; } catch(e){}
+  const root = host.firstElementChild;
+  const canvas = await html2canvas(root, {scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false, windowWidth:900});
+  return {canvas, root};
+}
+function fileBase(){
+  const who = (plan.clientRole==='Продавец' ? plan.seller : plan.buyer) || plan.object || 'клиент';
+  const s = who.split(/[ ,]/).filter(Boolean)[0] || 'клиент';
+  return `План сделки ${s}${plan.date?' '+fmtDateShort(plan.date):''}`.replace(/[\\/:*?"<>|]/g,'');
+}
+function downloadBlob(name, blob){
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+const isPhone = () => matchMedia('(pointer:coarse)').matches || /Android|iPhone|iPad/i.test(navigator.userAgent);
+async function saveFile(name, blob){
+  const file = new File([blob], name, {type: blob.type || (name.endsWith('.pdf') ? 'application/pdf' : 'image/png')});
+  const canShare = navigator.canShare && navigator.canShare({files:[file]});
+  if (canShare && isPhone()){
+    // a fresh tap is needed for the share sheet
+    modal(`<h3>Готово!</h3><p style="margin-top:0">${esc(name)}</p><div class="row" style="flex-direction:column;align-items:stretch;gap:8px">
+      <button class="btn o" id="shGo" style="justify-content:center">📤 Отправить клиенту (WhatsApp, Telegram…)</button>
+      <button class="btn ghost" id="shDl" style="justify-content:center">⬇ Сохранить на телефон</button>
+      <button class="btn ghost" data-close style="justify-content:center">Закрыть</button></div>`);
+    $('#shGo').onclick = async () => { try { await navigator.share({files:[file], title:name}); closeModal(); } catch(e){ if (e.name !== 'AbortError') toast('Не получилось открыть «Поделиться» — сохрани файл'); } };
+    $('#shDl').onclick = () => { downloadBlob(name, blob); closeModal(); };
+    return;
+  }
+  downloadBlob(name, blob);
+  toast('Файл скачан — можно отправлять клиенту');
+}
+async function exportPDF(){
+  const b = $('#bPdf'); b.disabled = true; b.textContent = 'Готовлю PDF…';
+  try{
+    const {canvas, root} = await renderCanvas();
+    const W = 794, H = Math.round(794*297/210), M = 40, k = canvas.width / root.offsetWidth;
+    // block boundaries for clean page breaks
+    const rootTop = root.getBoundingClientRect().top;
+    const headTop = el => { let h = el.previousElementSibling; if (!h && el.parentElement !== root) h = el.parentElement.previousElementSibling; return h && h.tagName==='H3' ? h.getBoundingClientRect().top : null; };
+    const blocks = [...root.querySelectorAll('.blk')].filter(el=>el.tagName!=='H3').map(el => { const r = el.getBoundingClientRect(); const ht = headTop(el); return {top:(ht??r.top)-rootTop, bottom:r.bottom-rootTop}; }).sort((a,b)=>a.top-b.top);
+    const total = root.offsetHeight, pages = []; let start = 0;
+    while (start < total - 2){
+      const avail = (pages.length ? H - 2*M : H - M);
+      let end = start + avail;
+      if (end >= total){ pages.push([start,total]); break; }
+      let cut = start;
+      for (const bl of blocks){ if (bl.bottom <= end && bl.bottom > cut) cut = bl.bottom; }
+      // prefer the start of the next block after cut
+      const next = blocks.find(bl => bl.top >= cut - 1 && bl.top <= end);
+      if (cut - start < avail*0.35) cut = end; // a giant block: hard cut
+      pages.push([start, cut]); start = next && next.top < end ? Math.max(cut, next.top - 4) : cut;
+    }
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({unit:'px', format:[W,H], orientation:'portrait', hotfixes:['px_scaling'], compress:true});
+    pages.forEach(([a,z],i) => {
+      if (i) pdf.addPage([W,H],'portrait');
+      const c = document.createElement('canvas'); c.width = canvas.width; c.height = Math.ceil((z-a)*k);
+      const cx = c.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,c.width,c.height);
+      cx.drawImage(canvas, 0, Math.floor(a*k), canvas.width, c.height, 0, 0, c.width, c.height);
+      pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', 0, i?M:0, W, (z-a));
+      if (pages.length > 1){ pdf.setFontSize(9); pdf.setTextColor(150); pdf.text(`${i+1} / ${pages.length}`, W-M, H-18, {align:'right'}); }
+    });
+    const blob = pdf.output('blob');
+    await saveFile(fileBase()+'.pdf', blob);
+    if (plan.status==='Черновик'){ plan.status='Отправлен клиенту'; touch(); saveToArchive(true); }
+  } catch(e){ console.error(e); toast('Не получилось собрать PDF: ' + (e.message||e)); }
+  b.disabled = false; b.textContent = '⬇ PDF для клиента';
+}
+async function exportPNG(){
+  const b = $('#bPng'); b.disabled = true; b.textContent = 'Рисую…';
+  try{
+    const {canvas} = await renderCanvas();
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    await saveFile(fileBase()+'.png', blob);
+    if (plan.status==='Черновик'){ plan.status='Отправлен клиенту'; touch(); saveToArchive(true); }
+  } catch(e){ console.error(e); toast('Не получилось: ' + (e.message||e)); }
+  b.disabled = false; b.textContent = '🖼 Картинкой';
+}
+$('#bPdf').onclick = exportPDF;
+$('#bPng').onclick = exportPNG;
+$('#bTxt').onclick = () => copyText(planText(plan));
+function clientDigits(){ let d = String(plan.clientPhone||'').replace(/\D/g,''); if (d.length===11 && d[0]==='8') d = '7'+d.slice(1); if (d.length===10) d = '7'+d; return d; }
+$('#bWa').onclick = () => { const d = clientDigits(); const url = (d ? `https://wa.me/${d}` : 'https://wa.me/') + '?text=' + encodeURIComponent(planText(plan).replace(/\*/g,'*')); window.open(url, '_blank'); };
+$('#bTg').onclick = () => { window.open('https://t.me/share/url?url=' + encodeURIComponent(' ') + '&text=' + encodeURIComponent(planText(plan)), '_blank'); };
+
+/* ================= PLANS LIST ================= */
+function renderArchive(){
+  const aa = $('#aAgent'), as = $('#aStatus');
+  const curA = aa.value, curS = as.value;
+  aa.innerHTML = `<option value="">Все агенты</option>` + agents.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('');
+  aa.hidden = !isAdmin();
+  as.innerHTML = `<option value="">Все статусы</option>` + STATUSES.map(s=>`<option>${s}</option>`).join('');
+  aa.value = curA; as.value = curS;
+  $('#aTitle').textContent = isAdmin() ? 'Все планы агентства' : 'Мои планы';
+  const q = $('#aSearch').value.trim().toLowerCase();
+  const list = plans.filter(p => (!curA || p.agentId===curA) && (!curS || p.status===curS) && (!q || [p.seller,p.buyer,p.object,p.bank].join(' ').toLowerCase().includes(q)));
+  $('#aList').innerHTML = list.length ? list.map(p => {
+    const ag = agents.find(a=>a.id===p.agentId);
+    const si = Math.max(0, STATUSES.indexOf(p.status));
+    return `<div class="arch-item" data-id="${esc(p.id)}"><div class="m"><b>${esc(p.object || 'Без объекта')}</b><span>${esc([p.buyer&&('Пок.: '+p.buyer), p.seller&&('Прод.: '+p.seller)].filter(Boolean).join(' · ') || '—')}</span><br><span>${esc(p.date?fmtDate(p.date):'дата не указана')}${ag&&isAdmin()?' · '+esc(ag.name):''}</span></div>
+      <span class="st-pill s${si}">${esc(p.status||'Черновик')}</span>
+      <button class="icon" data-aopen title="Открыть">✎</button><button class="icon" data-acopy title="Копия как шаблон">⧉</button><button class="icon" data-adel title="Удалить">🗑</button></div>`;
+  }).join('') : `<div class="empty">${plans.length ? 'Ничего не нашлось.' : 'Пока пусто. Заполни план и нажми «Сохранить».'}</div>`;
+}
+async function loadPlans(){
+  try { const r = await api('listPlans'); plans = r.plans || []; lsSet('pd_plans', plans); fillAddr(); if (!$('#v-archive').hidden) renderArchive(); if (!$('#v-summary').hidden) renderSummary(); }
+  catch(e){ if (!$('#v-archive').hidden) toast(e.message); }
+}
+$('#aSearch').oninput = renderArchive; $('#aAgent').onchange = renderArchive; $('#aStatus').onchange = renderArchive;
+$('#aReload').onclick = () => loadPlans().then(()=>toast('Обновлено'));
+$('#aList').addEventListener('click', async e => {
+  const it = e.target.closest('[data-id]'); if (!it) return;
+  const p = plans.find(x => x.id === it.dataset.id); if (!p) return;
+  if (e.target.closest('[data-aopen]')){ plan = Object.assign(blankPlan(), JSON.parse(JSON.stringify(p))); if (plan.clientRole !== 'Продавец') plan.clientRole = 'Покупатель'; lsSet('pd_draft', plan); show('form'); toast('План открыт'); }
+  if (e.target.closest('[data-acopy]')){
+    const n = Object.assign(blankPlan(), JSON.parse(JSON.stringify(p)), {id:uid(), createdAt:Date.now(), status:'Черновик', seller:'', buyer:'', clientPhone:'', object:'', price:'', priceContract:'', date:'', deposit:'', downPayment:'', cashBring:'', commPaid:'', agentId: me ? me.id : ''});
+    n.locations.forEach(l => l.id = uid()); n.expenses.forEach(x => x.id = uid());
+    plan = n; lsSet('pd_draft', plan); show('form'); toast('Новый план по образцу — заполни стороны и даты');
+  }
+  if (e.target.closest('[data-adel]')){
+    modal(`<h3>Удалить план?</h3><p>${esc(p.object||'Без объекта')}</p><div class="row" style="justify-content:flex-end"><button class="btn ghost" data-close>Отмена</button><button class="btn o" id="delOk">Удалить</button></div>`);
+    $('#delOk').onclick = async () => {
+      closeModal();
+      try { await api('deletePlan', {id:p.id}); plans = plans.filter(x=>x.id!==p.id); lsSet('pd_plans', plans); renderArchive(); toast('Удалено'); }
+      catch(err){ toast(err.message); }
+    };
+  }
+});
+
+/* ================= SUMMARY (руководитель) ================= */
+function monthKey(iso){ return iso ? iso.slice(0,7) : ''; }
+const MONTHS_NOM = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+function renderSummary(){
+  const sel = $('#sMonth');
+  const now = new Date(), cur = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const months = new Set([cur]); plans.forEach(p => { if (p.date) months.add(monthKey(p.date)); });
+  const ms = [...months].sort().reverse();
+  const keep = sel.value || cur;
+  sel.innerHTML = ms.map(m => `<option value="${m}">${MONTHS_NOM[+m.slice(5)-1]} ${m.slice(0,4)}</option>`).join('');
+  sel.value = ms.includes(keep) ? keep : cur;
+  const m = sel.value;
+  const inMonth = plans.filter(p => monthKey(p.date) === m && p.status !== 'Отменена');
+  const done = inMonth.filter(p => p.status === 'Сделка проведена');
+  const rows = agents.map(a => {
+    const mine = inMonth.filter(p => p.agentId === a.id), d = mine.filter(p => p.status === 'Сделка проведена');
+    return {a, all: mine.length, done: d.length, work: mine.length - d.length, comm: d.reduce((s,p)=>s+commAmount(p),0), commPlan: mine.reduce((s,p)=>s+commAmount(p),0), vol: d.reduce((s,p)=>s+num(p.price),0)};
+  }).filter(r => r.all || r.a.active !== false).sort((x,y)=>y.comm-x.comm || y.all-x.all);
+  const tot = rows.reduce((t,r)=>({all:t.all+r.all, done:t.done+r.done, comm:t.comm+r.comm, commPlan:t.commPlan+r.commPlan, vol:t.vol+r.vol}),{all:0,done:0,comm:0,commPlan:0,vol:0});
+  const today = new Date(); today.setHours(0,0,0,0);
+  const soon = plans.filter(p => p.date && p.status !== 'Отменена' && p.status !== 'Сделка проведена').map(p => ({p, d: new Date(p.date+'T00:00:00')}))
+    .filter(x => x.d >= today && x.d - today <= 14*864e5).sort((a,b)=>a.d-b.d);
+  const overdue = plans.filter(p => p.date && (p.status === 'Черновик' || p.status === 'Отправлен клиенту') && new Date(p.date+'T00:00:00') < today);
+  $('#sBody').innerHTML = `
+    <div class="totals" style="margin-top:0">
+      <div class="tot">Сделок в месяце<b>${tot.all}</b></div>
+      <div class="tot">Проведено<b>${tot.done}</b></div>
+      <div class="tot or">Комиссия по проведённым<b>${money(tot.comm)}</b></div>
+      <div class="tot">Комиссия план<b>${money(tot.commPlan)}</b></div>
+    </div>
+    <div class="sub">По агентам</div>
+    <div style="overflow-x:auto"><table class="sum-t"><thead><tr><th>Агент</th><th>Сделок</th><th>Провед.</th><th class="r">Комиссия</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr><td>${esc(r.a.name)}</td><td>${r.all}</td><td>${r.done}</td><td class="r">${r.comm?money(r.comm):'—'}${r.commPlan>r.comm?`<div class="hint">план ${money(r.commPlan)}</div>`:''}</td></tr>`).join('')}</tbody></table></div>
+    <div class="hint" style="margin-top:6px">Считаются планы с датой сделки в выбранном месяце. «Проведено» — статус «Сделка проведена». Комиссия — из поля «Стоимость услуг».</div>
+    <div class="sub">Ближайшие 2 недели</div>
+    ${soon.length ? soon.map(({p,d}) => { const ag = agents.find(a=>a.id===p.agentId); const t = (p.locations||[])[0]; return `<div class="arch-item" data-sid="${esc(p.id)}"><div class="m"><b>${esc(fmtDate(p.date))}${t&&t.time?' · '+esc(t.time):''}</b><span>${esc(p.object||'Без объекта')}</span><br><span>${esc(ag?ag.name:'')} · ${esc(p.status)}</span></div><button class="icon" data-sopen>✎</button></div>`; }).join('') : '<div class="hint">Нет сделок на ближайшие две недели.</div>'}
+    ${overdue.length ? `<div class="sub">Дата прошла, а статус не обновлён</div>${overdue.map(p => { const ag = agents.find(a=>a.id===p.agentId); return `<div class="arch-item" data-sid="${esc(p.id)}"><div class="m"><b>${esc(p.object||'Без объекта')}</b><span>${esc(fmtDate(p.date))} · ${esc(ag?ag.name:'')} · ${esc(p.status)}</span></div><button class="icon" data-sopen>✎</button></div>`; }).join('')}` : ''}`;
+}
+$('#sMonth').onchange = renderSummary;
+$('#sBody').addEventListener('click', e => { const it = e.target.closest('[data-sid]'); if (!it) return; const p = plans.find(x=>x.id===it.dataset.sid); if (p){ plan = Object.assign(blankPlan(), JSON.parse(JSON.stringify(p))); lsSet('pd_draft', plan); show('form'); } });
+
+/* ================= MORE: profile, help, settings ================= */
+function helpHTML(){ return `
+  <div class="card help"><h2>Как пользоваться</h2>
+  <ol>
+    <li><b>Заполнить.</b> Стороны, объект, стоимость, способ расчёта. Комиссия считается сама.</li>
+    <li><b>Маршрут дня.</b> Жми «＋ Банк», «＋ МФЦ», «＋ Нотариус»… У каждой точки своё время, адрес и что там делаем — выбирай из списка или пиши своё. Порядок меняется стрелками ↑↓.</li>
+    <li><b>Документы.</b> Нажми на нужные — они станут чёрными. Нет нужного? Впиши внизу и нажми «＋ Добавить».</li>
+    <li><b>Расходы.</b> Жми готовые строки (госпошлина, аккредитив…), поправь суммы и выбери, когда и как платим. Итоги посчитаются.</li>
+    <li><b>Как будет проходить сделка.</b> Текст собирается сам. Поправь под ситуацию.</li>
+    <li><b>Сохранить.</b> После первого сохранения план сам сохраняется при каждом изменении.</li>
+    <li><b>Готово → Просмотр.</b> Проверь, как увидит клиент, и жми «PDF для клиента». На телефоне появится кнопка «Отправить» — выбирай WhatsApp или Telegram и клиента.</li>
+    <li><b>После сделки</b> поставь статус «Сделка проведена» (вверху формы) — так она попадёт в сводку.</li>
+  </ol>
+  <div class="sub">Полезно</div>
+  <ul>
+    <li>«⧉» в списке планов — новый план по образцу старого: маршрут, документы и расходы уже заполнены.</li>
+    <li>Если пропал интернет — заполняй дальше, черновик хранится в телефоне. Сохрани, когда связь вернётся.</li>
+    <li>Иконку на экран телефона: в браузере меню → «На главный экран» / «Добавить на экран Домой».</li>
+  </ul></div>`; }
+function renderMore(){
+  const adminBlock = isAdmin() ? `
+  <div class="card"><h2>Агентство</h2>
+    <div class="grid">
+      <label class="f">Название<input type="text" data-s="agency" value="${esc(settings.agency)}"></label>
+      <label class="f">Город<input type="text" data-s="city" value="${esc(settings.city)}"></label>
+      <label class="f">Телефон агентства<input type="text" data-s="phone" value="${esc(settings.phone)}" placeholder="+7 …"></label>
+      <label class="f">Подпись в конце плана<input type="text" data-s="bye" value="${esc(settings.bye)}"></label>
+    </div></div>
+  <div class="card"><h2>Агенты<span class="sp"></span><button class="btn sm" id="agAdd">＋ Агент</button></h2>
+    ${agents.map(a=>`<div class="arch-item" data-ag="${esc(a.id)}" style="${a.active===false?'opacity:.55':''}"><div class="m"><b>${esc(a.name)}${a.role==='admin'?' · руководитель':''}</b><span>${esc(a.phone||'без телефона')}${a.hasPin?'':' · <b style="color:#DD1C1C">PIN не задан</b>'}${a.active===false?' · отключён':''}</span></div><button class="btn ghost sm" data-agedit>Изменить</button></div>`).join('')}
+    <div class="hint">Агент входит, выбрав своё имя и введя PIN. PIN задаёшь ты и сообщаешь агенту. Уволился — нажми «Изменить» → «Отключить», его планы останутся.</div>
+  </div>
+  <div class="card"><h2>Перенос из старой версии</h2>
+    <div class="hint" style="margin-bottom:8px">Выбери файл «перенос_из_старой_версии.json» — планы и агенты из прежнего приложения попадут в базу.</div>
+    <input type="file" id="impFile" accept=".json,application/json"></div>` : '';
+  $('#v-more').innerHTML = `
+  <div class="card"><h2>Мой профиль</h2>
+    <div style="margin-bottom:10px"><b>${esc(me ? me.name : '')}</b> · ${isAdmin()?'руководитель':'агент'}</div>
+    <div class="grid">
+      <label class="f">Мой телефон (печатается в плане)<input type="text" id="myPhone" value="${esc(me && me.phone || '')}" placeholder="+7 …" inputmode="tel"></label>
+      <div class="row" style="align-items:flex-end"><button class="btn ghost sm" id="myPin">Сменить PIN</button><button class="btn ghost sm" id="logout">Выйти</button></div>
+    </div></div>
+  ${helpHTML()}
+  ${adminBlock}`;
+}
+let setTimer, phoneTimer;
+$('#v-more').addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.s){ settings[el.dataset.s] = el.value; lsSet('pd_settings', settings); clearTimeout(setTimer); setTimer = setTimeout(() => api('saveSettings',{settings:{agency:settings.agency, city:settings.city, phone:settings.phone, bye:settings.bye}}).then(()=>toast('Настройки сохранены')).catch(err=>toast(err.message)), 900); }
+  if (el.id === 'myPhone'){ clearTimeout(phoneTimer); phoneTimer = setTimeout(async () => { try { const r = await api('setMyPhone',{phone:el.value}); me = r.me; session.me = me; lsSet('pd_session', session); const a = agents.find(x=>x.id===me.id); if (a) a.phone = me.phone; toast('Телефон сохранён'); } catch(err){ toast(err.message); } }, 900); }
+});
+$('#v-more').addEventListener('change', async e => {
+  if (e.target.id !== 'impFile' || !e.target.files[0]) return;
+  try {
+    const data = JSON.parse(await e.target.files[0].text());
+    const r = await api('importData', {data});
+    toast(`Перенесено: планов ${r.imported.plans}, агентов ${r.imported.agents}`);
+    await refreshMe(); await loadPlans(); renderMore();
+  } catch(err){ toast('Не получилось: ' + err.message); }
+});
+$('#v-more').addEventListener('click', e => {
+  const t = e.target;
+  if (t.id === 'logout'){ logout(false); return; }
+  if (t.id === 'myPin'){
+    modal(`<h3>Сменить PIN</h3><div class="grid" style="grid-template-columns:1fr"><label class="f">Старый PIN<input type="password" id="pOld" inputmode="numeric"></label><label class="f">Новый PIN (4–8 цифр)<input type="password" id="pNew" inputmode="numeric"></label></div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn ghost" data-close>Отмена</button><button class="btn" id="pOk">Сохранить</button></div>`);
+    $('#pOk').onclick = async () => { try { await api('setMyPin',{oldPin:$('#pOld').value, newPin:$('#pNew').value}); closeModal(); toast('PIN изменён'); } catch(err){ toast(err.message); } };
+    return;
+  }
+  if (t.id === 'agAdd'){ agentModal(null); return; }
+  if (t.closest('[data-agedit]')){ agentModal(agents.find(a => a.id === t.closest('[data-ag]').dataset.ag)); return; }
+});
+function agentModal(a){
+  const n = !a;
+  a = a || {name:'', phone:'', role:'agent', active:true};
+  modal(`<h3>${n?'Новый агент':'Агент'}</h3>
+    <div class="grid" style="grid-template-columns:1fr">
+      <label class="f">Имя и фамилия<input type="text" id="amName" value="${esc(a.name)}"></label>
+      <label class="f">Телефон<input type="text" id="amPhone" value="${esc(a.phone||'')}" inputmode="tel" placeholder="+7 …"></label>
+      <label class="f">${n?'PIN для входа (4–8 цифр)':'Новый PIN (оставь пустым, чтобы не менять)'}<input type="text" id="amPin" inputmode="numeric" placeholder="${n?'например 4821':''}"></label>
+      <label class="f">Роль<select id="amRole"><option value="agent" ${a.role!=='admin'?'selected':''}>Агент — видит только свои планы</option><option value="admin" ${a.role==='admin'?'selected':''}>Руководитель — видит всё</option></select></label>
+    </div>
+    <div class="row" style="justify-content:space-between;margin-top:14px;flex-wrap:wrap">
+      ${n?'<span></span>':`<button class="btn ghost" id="amToggle">${a.active===false?'Включить':'Отключить'}</button>`}
+      <div class="row"><button class="btn ghost" data-close>Отмена</button><button class="btn" id="amOk">Сохранить</button></div></div>`);
+  const save = async (extra) => {
+    const body = Object.assign({id:a.id, name:$('#amName').value, phone:$('#amPhone').value, role:$('#amRole').value, active:a.active!==false}, extra||{});
+    const pin = $('#amPin').value.trim(); if (pin) body.pin = pin;
+    if (n && !pin){ toast('Задай PIN — без него агент не войдёт'); return; }
+    try { const r = await api('saveAgent',{agent:body}); agents = r.agents; lsSet('pd_agents', agents); closeModal(); renderMore(); toast(pin ? `Сохранено. Сообщи агенту PIN: ${pin}` : 'Сохранено'); }
+    catch(err){ toast(err.message); }
+  };
+  $('#amOk').onclick = () => save();
+  const tg = $('#amToggle'); if (tg) tg.onclick = () => save({active: a.active===false});
+}
+
+/* ================= navigation ================= */
+const VIEWS = ['form','preview','archive','summary','more','login'];
+function show(v){
+  VIEWS.forEach(x => $('#v-'+x).hidden = x!==v);
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v===v));
+  $('#tabs').hidden = v==='login';
+  $('#tabs [data-v=summary]').hidden = !isAdmin();
+  $('#tabs [data-v=archive]').textContent = isAdmin() ? 'Планы' : 'Мои планы';
+  $('#bar').style.display = (v==='form'||v==='preview') ? '' : 'none';
+  $('#bGo').style.display = v==='form' ? '' : 'none';
+  if (v==='preview') renderPreview();
+  if (v==='archive'){ renderArchive(); loadPlans(); }
+  if (v==='summary'){ renderSummary(); loadPlans(); }
+  if (v==='more') renderMore();
+  if (v==='form') renderForm();
+  window.scrollTo(0,0);
+}
+$('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) show(b.dataset.v); };
+$('#bGo').onclick = () => show('preview');
+$('#bSave').onclick = () => saveToArchive(false);
+$('#bNew').onclick = () => {
+  modal(`<h3>Начать новый план?</h3><p class="hint">Текущий план можно сначала сохранить.</p><div class="row" style="justify-content:flex-end;flex-wrap:wrap"><button class="btn ghost" data-close>Отмена</button><button class="btn ghost" id="nwSave">Сохранить и новый</button><button class="btn o" id="nwGo">Новый без сохранения</button></div>`);
+  const go = () => { closeModal(); plan = blankPlan(); plan.agentId = me ? me.id : ''; lsSet('pd_draft', plan); show('form'); };
+  $('#nwGo').onclick = go; $('#nwSave').onclick = async () => { await saveToArchive(true); go(); toast('Сохранено. Новый план'); };
+};
+
+/* address suggestions */
+function fillAddr(){
+  const set = new Set(ADDR_SEED);
+  plans.forEach(p => (p.locations||[]).forEach(l => { if (l.address) set.add(l.address); }));
+  $('#dlAddr').innerHTML = [...set].map(a=>`<option>${esc(a)}</option>`).join('');
+}
+
+/* ================= auth ================= */
+async function showLogin(){
+  show('login');
+  const box = $('#v-login');
+  box.innerHTML = `<div class="card login"><div class="hint">Загружаю…</div></div>`;
+  let st;
+  try { st = await api('status'); } catch(e){ box.innerHTML = `<div class="card login"><h2>Нет связи с сервером</h2><p class="hint">${esc(e.message)}</p><button class="btn" onclick="showLogin()">Попробовать ещё раз</button></div>`; return; }
+  if (!st.hasAgents){
+    box.innerHTML = `<div class="card login"><h2>Первый запуск</h2><p class="hint" style="margin-top:0">Создай аккаунт руководителя. Потом в «Ещё» добавишь агентов.</p>
+      <div class="grid" style="grid-template-columns:1fr"><label class="f">Имя и фамилия<input type="text" id="bName"></label><label class="f">Телефон<input type="text" id="bPhone" inputmode="tel" placeholder="+7 …"></label><label class="f">Придумай PIN (4–8 цифр)<input type="password" id="bPin" inputmode="numeric"></label></div>
+      <button class="btn o" id="bBoot" style="margin-top:14px;width:100%;justify-content:center">Создать и войти</button></div>`;
+    $('#bBoot').onclick = async () => { try { const r = await api('bootstrap',{name:$('#bName').value, phone:$('#bPhone').value, pin:$('#bPin').value}); await afterLogin(r); } catch(e){ toast(e.message); } };
+    return;
+  }
+  const r = await api('agentsPublic').catch(()=>({agents:[]}));
+  const last = lsGet('pd_last_agent','');
+  box.innerHTML = `<div class="card login"><h2>Вход</h2>
+    <div class="grid" style="grid-template-columns:1fr"><label class="f">Кто ты<select id="lAgent"><option value="">— выбери себя —</option>${r.agents.map(a=>`<option value="${esc(a.id)}" ${a.id===last?'selected':''}>${esc(a.name)}</option>`).join('')}</select></label>
+    <label class="f">PIN<input type="password" id="lPin" inputmode="numeric" autocomplete="current-password"></label></div>
+    <button class="btn o" id="lGo" style="margin-top:14px;width:100%;justify-content:center">Войти</button>
+    <p class="hint" style="margin-bottom:0">Нет PIN или забыл — спроси у руководителя.</p></div>`;
+  const go = async () => { const id = $('#lAgent').value; if (!id){ toast('Выбери себя в списке'); return; } try { const res = await api('login',{agentId:id, pin:$('#lPin').value}); lsSet('pd_last_agent', id); await afterLogin(res); } catch(e){ toast(e.message); } };
+  $('#lGo').onclick = go; $('#lPin').onkeydown = e => { if (e.key==='Enter') go(); };
+}
+async function afterLogin(r){
+  session = {token: r.token, me: r.me}; me = r.me; lsSet('pd_session', session);
+  if (!plan.agentId || plan.agentId !== me.id && !isAdmin()) { plan = blankPlan(); plan.agentId = me.id; lsSet('pd_draft', plan); }
+  await refreshMe(); loadPlans(); show('form'); toast('Привет, ' + me.name.split(' ').slice(-1)[0] + '!');
+}
+async function refreshMe(){
+  const r = await api('me');
+  me = r.me; session.me = me; lsSet('pd_session', session);
+  settings = Object.assign(settings, r.settings || {}); lsSet('pd_settings', settings);
+  agents = r.agents || []; lsSet('pd_agents', agents);
+}
+function logout(expired){
+  session = null; me = null;
+  try { ['pd_session','pd_plans','pd_draft'].forEach(k => localStorage.removeItem(k)); } catch(e){}
+  plans = []; plan = blankPlan();
+  if (expired) toast('Нужно войти заново');
+  showLogin();
+}
+
+/* ================= init ================= */
+$('#brandTop').innerHTML = brandHTML('план сделки');
+(async () => {
+  if (!API || /ВСТАВЬ/.test(API)){
+    show('login');
+    $('#v-login').innerHTML = `<div class="card login"><h2>Сайт ещё не подключён к базе</h2><p class="hint">Открой файл <b>config.js</b> и вставь адрес веб-приложения Google (заканчивается на <b>/exec</b>). Подробно — в файле «КАК УСТАНОВИТЬ».</p></div>`;
+    return;
+  }
+  if (!session){ showLogin(); return; }
+  autoStory(); show('form'); fillAddr();
+  try { await refreshMe(); renderForm(); loadPlans(); } catch(e){ /* offline: work from cache */ }
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+/**
+ * «Пора действовать» — План сделки. Сервер на Google Таблице.
+ *
+ * Как поставить (один раз):
+ *  1. Создай новую Google Таблицу, например «План сделки — база».
+ *  2. Расширения → Apps Script. Удали всё, что там есть, и вставь этот файл целиком. Сохрани (💾).
+ *  3. Справа вверху «Начать развертывание» → «Новое развертывание» → тип «Веб-приложение».
+ *       Выполнять как: «Я».  Кто имеет доступ: «Все».  → «Развернуть», разреши доступ к таблице.
+ *  4. Скопируй адрес веб-приложения (заканчивается на /exec) и вставь его в файл config.js сайта.
+ *
+ * Листы «Планы», «Агенты», «Настройки» создаются сами при первом обращении.
+ * После правки этого кода: «Развертывание» → «Управление развертываниями» → ✎ → Версия: «Новая» → «Развернуть»
+ * (тогда адрес останется прежним).
+ */
+
+const SHEETS = {
+  plans:    { name: 'Планы',     head: ['id','Агент','Статус','Дата сделки','План для','Продавец','Покупатель','Объект','Стоимость','Комиссия','Обновлён','agentId','json'] },
+  agents:   { name: 'Агенты',    head: ['id','Имя','Телефон','Роль','Активен','pinHash','Создан'] },
+  settings: { name: 'Настройки', head: ['Ключ','Значение'] }
+};
+const TOKEN_DAYS = 180;
+
+/* ---------------- entry points ---------------- */
+function doGet(e) {
+  return json_({ ok: true, app: 'pora-plan', time: new Date().toISOString() });
+}
+
+function doPost(e) {
+  let req = {};
+  try { req = JSON.parse(e.postData.contents || '{}'); } catch (err) { return json_({ ok: false, error: 'Неверный запрос' }); }
+  try {
+    const res = route_(req);
+    return json_(Object.assign({ ok: true }, res));
+  } catch (err) {
+    return json_({ ok: false, error: String(err && err.message || err) });
+  }
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ---------------- router ---------------- */
+function route_(r) {
+  const a = r.action;
+  if (a === 'status')      return { hasAgents: listAgents_().length > 0 };
+  if (a === 'agentsPublic')return { agents: listAgents_().filter(x => x.active).map(x => ({ id: x.id, name: x.name })) };
+  if (a === 'bootstrap')   return bootstrap_(r);
+  if (a === 'login')       return login_(r);
+
+  const me = auth_(r.token);
+  const admin = me.role === 'admin';
+
+  switch (a) {
+    case 'me':          return { me: pub_(me), settings: getSettings_(), agents: listAgents_().map(pub_) };
+    case 'listPlans':   return { plans: listPlans_(admin ? null : me.id) };
+    case 'savePlan':    return { plan: savePlan_(r.plan, me) };
+    case 'deletePlan':  return deletePlan_(r.id, me);
+    case 'addCustomDoc':return { settings: addCustomDoc_(r.doc) };
+    case 'removeCustomDoc': return { settings: removeCustomDoc_(r.doc) };
+    case 'setMyPin':    return setMyPin_(me, r.oldPin, r.newPin);
+    case 'setMyPhone':  { updateAgent_(me.id, { phone: String(r.phone || '') }); return { me: pub_(findAgent_(me.id)) }; }
+  }
+  if (!admin) throw new Error('Только для руководителя');
+  switch (a) {
+    case 'saveSettings':return { settings: saveSettings_(r.settings) };
+    case 'saveAgent':   return { agent: pub_(saveAgent_(r.agent)), agents: listAgents_().map(pub_) };
+    case 'importData':  return importData_(r.data, me);
+  }
+  throw new Error('Неизвестное действие: ' + a);
+}
+
+/* ---------------- sheets ---------------- */
+function sheet_(key) {
+  const def = SHEETS[key];
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(def.name);
+  if (!sh) {
+    sh = ss.insertSheet(def.name);
+    sh.getRange(1, 1, 1, def.head.length).setValues([def.head]).setFontWeight('bold').setBackground('#F3AD32');
+    sh.setFrozenRows(1);
+    if (key === 'plans') { sh.hideColumns(12, 2); sh.setColumnWidth(8, 320); sh.getRange('F:H').setNumberFormat('@'); sh.getRange('L:M').setNumberFormat('@'); sh.getRange('A:A').setNumberFormat('@'); }
+    if (key === 'agents') { sh.hideColumns(6, 1); sh.getRange('A:C').setNumberFormat('@'); }
+    if (key === 'settings') sh.getRange('B:B').setNumberFormat('@');
+  }
+  return sh;
+}
+function rows_(key) {
+  const sh = sheet_(key);
+  const n = sh.getLastRow();
+  if (n < 2) return [];
+  return sh.getRange(2, 1, n - 1, SHEETS[key].head.length).getValues();
+}
+function findRow_(key, id) {
+  const sh = sheet_(key);
+  const n = sh.getLastRow();
+  if (n < 2) return -1;
+  const ids = sh.getRange(2, 1, n - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(id)) return i + 2;
+  return -1;
+}
+function withLock_(fn) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try { return fn(); } finally { lock.releaseLock(); }
+}
+
+/* ---------------- security ---------------- */
+function secret_() {
+  const p = PropertiesService.getScriptProperties();
+  let s = p.getProperty('SECRET');
+  if (!s) { s = Utilities.getUuid() + Utilities.getUuid(); p.setProperty('SECRET', s); }
+  return s;
+}
+function hash_(text) {
+  const raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, secret_() + '|' + text, Utilities.Charset.UTF_8);
+  return Utilities.base64EncodeWebSafe(raw);
+}
+function sign_(payload) {
+  const raw = Utilities.computeHmacSha256Signature(payload, secret_());
+  return Utilities.base64EncodeWebSafe(raw);
+}
+function makeToken_(agentId) {
+  const exp = Date.now() + TOKEN_DAYS * 864e5;
+  const payload = agentId + '.' + exp;
+  return Utilities.base64EncodeWebSafe(payload) + '.' + sign_(payload);
+}
+function auth_(token) {
+  if (!token) throw new Error('AUTH');
+  const parts = String(token).split('.');
+  if (parts.length !== 2) throw new Error('AUTH');
+  const payload = Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString();
+  if (sign_(payload) !== parts[1]) throw new Error('AUTH');
+  const [id, exp] = payload.split('.');
+  if (Date.now() > Number(exp)) throw new Error('AUTH');
+  const ag = findAgent_(id);
+  if (!ag || !ag.active) throw new Error('AUTH');
+  return ag;
+}
+function checkPin_(pin) {
+  pin = String(pin || '').trim();
+  if (!/^\d{4,8}$/.test(pin)) throw new Error('PIN — от 4 до 8 цифр');
+  return pin;
+}
+
+/* ---------------- agents ---------------- */
+function listAgents_() {
+  return rows_('agents').filter(r => r[0]).map(r => ({
+    id: String(r[0]), name: String(r[1]), phone: String(r[2]), role: String(r[3]) === 'руководитель' ? 'admin' : 'agent',
+    active: r[4] !== false && String(r[4]).toLowerCase() !== 'нет', pinHash: String(r[5] || '')
+  }));
+}
+function findAgent_(id) { return listAgents_().find(a => a.id === String(id)); }
+function pub_(a) { return a && { id: a.id, name: a.name, phone: a.phone, role: a.role, active: a.active, hasPin: !!a.pinHash }; }
+function agentRow_(a, created) {
+  return [a.id, a.name, a.phone || '', a.role === 'admin' ? 'руководитель' : 'агент', a.active ? 'да' : 'нет', a.pinHash || '', created || new Date()];
+}
+function updateAgent_(id, patch) {
+  return withLock_(() => {
+    const row = findRow_('agents', id);
+    if (row < 0) throw new Error('Агент не найден');
+    const a = Object.assign(findAgent_(id), patch);
+    const sh = sheet_('agents');
+    const created = sh.getRange(row, 7).getValue();
+    sh.getRange(row, 1, 1, 7).setValues([agentRow_(a, created)]);
+    return a;
+  });
+}
+function bootstrap_(r) {
+  return withLock_(() => {
+    if (listAgents_().length) throw new Error('Руководитель уже создан — войди под своим PIN');
+    const name = String(r.name || '').trim();
+    if (!name) throw new Error('Укажи имя');
+    const id = Utilities.getUuid().slice(0, 12);
+    const a = { id, name, phone: String(r.phone || ''), role: 'admin', active: true, pinHash: hash_(checkPin_(r.pin)) };
+    sheet_('agents').appendRow(agentRow_(a));
+    sheet_('plans'); sheet_('settings');
+    return { token: makeToken_(id), me: pub_(a) };
+  });
+}
+function login_(r) {
+  const a = findAgent_(r.agentId);
+  if (!a || !a.active) throw new Error('Агент не найден');
+  if (!a.pinHash) throw new Error('Для тебя ещё не задан PIN — попроси руководителя');
+  // brute-force guard
+  const cache = CacheService.getScriptCache(), key = 'fail_' + a.id;
+  const fails = Number(cache.get(key) || 0);
+  if (fails >= 6) throw new Error('Слишком много попыток. Подожди 10 минут');
+  if (hash_(String(r.pin || '').trim()) !== a.pinHash) { cache.put(key, String(fails + 1), 600); throw new Error('Неверный PIN'); }
+  cache.remove(key);
+  return { token: makeToken_(a.id), me: pub_(a) };
+}
+function saveAgent_(ag) {
+  if (!ag || !String(ag.name || '').trim()) throw new Error('Укажи имя агента');
+  const existing = ag.id ? findAgent_(ag.id) : null;
+  const a = {
+    id: existing ? existing.id : (ag.id || Utilities.getUuid().slice(0, 12)),
+    name: String(ag.name).trim(), phone: String(ag.phone || ''),
+    role: ag.role === 'admin' ? 'admin' : 'agent',
+    active: ag.active !== false,
+    pinHash: ag.pin ? hash_(checkPin_(ag.pin)) : (existing ? existing.pinHash : '')
+  };
+  if (existing) {
+    // don't allow removing the last admin
+    if (existing.role === 'admin' && (a.role !== 'admin' || !a.active)) {
+      const admins = listAgents_().filter(x => x.role === 'admin' && x.active && x.id !== a.id);
+      if (!admins.length) throw new Error('Нельзя убрать последнего руководителя');
+    }
+    return updateAgent_(a.id, a);
+  }
+  return withLock_(() => { sheet_('agents').appendRow(agentRow_(a)); return a; });
+}
+function setMyPin_(me, oldPin, newPin) {
+  if (hash_(String(oldPin || '').trim()) !== me.pinHash) throw new Error('Старый PIN неверный');
+  updateAgent_(me.id, { pinHash: hash_(checkPin_(newPin)) });
+  return { done: true };
+}
+
+/* ---------------- settings ---------------- */
+const DEFAULT_SETTINGS = { agency: 'Пора действовать', city: 'Екатеринбург', phone: '', bye: 'Если будут вопросы — пишите, я на связи!', customDocs: [] };
+function getSettings_() {
+  const s = Object.assign({}, DEFAULT_SETTINGS);
+  rows_('settings').forEach(r => {
+    if (!r[0]) return;
+    let v = r[1];
+    try { if (typeof v === 'string' && /^[\[{]/.test(v)) v = JSON.parse(v); } catch (e) {}
+    s[r[0]] = v;
+  });
+  if (!Array.isArray(s.customDocs)) s.customDocs = [];
+  return s;
+}
+function saveSettings_(patch) {
+  return withLock_(() => {
+    const s = Object.assign(getSettings_(), patch || {});
+    const keys = ['agency', 'city', 'phone', 'bye', 'customDocs'];
+    const sh = sheet_('settings');
+    if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 2).clearContent();
+    sh.getRange(2, 1, keys.length, 2).setValues(keys.map(k => [k, typeof s[k] === 'object' ? JSON.stringify(s[k]) : String(s[k] == null ? '' : s[k])]));
+    return getSettings_();
+  });
+}
+function addCustomDoc_(doc) {
+  doc = String(doc || '').trim().slice(0, 200);
+  const s = getSettings_();
+  if (doc && s.customDocs.indexOf(doc) < 0) { s.customDocs.push(doc); return saveSettings_({ customDocs: s.customDocs }); }
+  return s;
+}
+function removeCustomDoc_(doc) {
+  const s = getSettings_();
+  return saveSettings_({ customDocs: s.customDocs.filter(d => d !== doc) });
+}
+
+/* ---------------- plans ---------------- */
+function listPlans_(agentId) {
+  const out = [];
+  rows_('plans').forEach(r => {
+    if (!r[0] || !r[12]) return;
+    if (agentId && String(r[11]) !== agentId) return;
+    try { out.push(JSON.parse(r[12])); } catch (e) {}
+  });
+  out.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  return out;
+}
+function money_(v) { const n = Number(String(v || '').replace(/[^\d.,]/g, '').replace(',', '.')) || 0; return n; }
+function commission_(p) {
+  const price = money_(p.price), v = money_(p.commValue);
+  let c = p.commType === 'pct' ? price * v / 100 : v;
+  if (p.commType === 'pct' && money_(p.commMin) > c) c = money_(p.commMin);
+  return Math.round(c);
+}
+function planRow_(p) {
+  const ag = findAgent_(p.agentId);
+  return [p.id, ag ? ag.name : '', p.status || 'Черновик', p.date ? new Date(p.date + 'T00:00:00') : '', p.clientRole || '',
+          p.seller || '', p.buyer || '', p.object || '', money_(p.price) || '', commission_(p) || '',
+          new Date(p.updatedAt || Date.now()), p.agentId || '', JSON.stringify(p)];
+}
+function savePlan_(p, me) {
+  if (!p || !p.id) throw new Error('Пустой план');
+  return withLock_(() => {
+    const row = findRow_('plans', p.id);
+    const sh = sheet_('plans');
+    if (row > 0) {
+      const ownerId = String(sh.getRange(row, 12).getValue());
+      if (me.role !== 'admin' && ownerId && ownerId !== me.id) throw new Error('Это план другого агента');
+      if (me.role !== 'admin') p.agentId = ownerId || me.id;
+    } else if (me.role !== 'admin' || !p.agentId) {
+      p.agentId = me.id;
+    }
+    p.updatedAt = Date.now();
+    const values = [planRow_(p)];
+    if (JSON.stringify(p).length > 49000) throw new Error('План слишком большой для одной ячейки — сократи текст');
+    if (row > 0) sh.getRange(row, 1, 1, values[0].length).setValues(values);
+    else sh.appendRow(values[0]);
+    sh.getRange(row > 0 ? row : sh.getLastRow(), 4).setNumberFormat('dd.mm.yyyy');
+    return p;
+  });
+}
+function deletePlan_(id, me) {
+  return withLock_(() => {
+    const row = findRow_('plans', id);
+    if (row < 0) return { done: true };
+    const sh = sheet_('plans');
+    const ownerId = String(sh.getRange(row, 12).getValue());
+    if (me.role !== 'admin' && ownerId !== me.id) throw new Error('Это план другого агента');
+    sh.deleteRow(row);
+    return { done: true };
+  });
+}
+
+/* ---------------- import from the old version ---------------- */
+function importData_(data, me) {
+  data = data || {};
+  let agents = 0, plans = 0;
+  (data.agents || []).forEach(a => {
+    if (!a || !a.name) return;
+    if (a.id && findAgent_(a.id)) return;
+    const byName = listAgents_().find(x => x.name.trim().toLowerCase() === String(a.name).trim().toLowerCase());
+    if (byName) { (data.plans || []).forEach(p => { if (p.agentId === a.id) p.agentId = byName.id; }); return; }
+    saveAgent_({ id: a.id, name: a.name, phone: a.phone, role: 'agent', active: true });
+    agents++;
+  });
+  if (data.settings) {
+    const cur = getSettings_(), s = data.settings, patch = {};
+    ['agency', 'city', 'phone', 'bye'].forEach(k => { if (s[k] && !cur[k]) patch[k] = s[k]; });
+    if (Array.isArray(s.customDocs)) patch.customDocs = Array.from(new Set(cur.customDocs.concat(s.customDocs)));
+    saveSettings_(patch);
+  }
+  (data.plans || []).forEach(p => {
+    if (!p || !p.id) return;
+    if (!p.agentId || !findAgent_(p.agentId)) p.agentId = me.id;
+    const keep = p.updatedAt;
+    savePlan_(p, me);
+    plans++;
+  });
+  return { imported: { agents, plans } };
+}
