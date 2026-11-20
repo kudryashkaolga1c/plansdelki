@@ -1,2 +1,2 @@
-// Адрес сервера (веб-приложение Google Apps Script). Вставь между кавычками адрес, который заканчивается на /exec
-window.API_URL = 'ВСТАВЬ_СЮДА_АДРЕС_/exec';
+// Адрес сервера (веб-приложение Google Apps Script «План сделки — сервер»)
+window.API_URL = 'https://script.google.com/macros/s/AKfycbychU_yPPwJfLYUNEHvXUokiV_4sRDdAHA7-6V9xamNBYSjp3iesLwu2Xmy-o3YfuNa/exec';
